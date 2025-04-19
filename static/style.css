@@ -81,6 +81,10 @@ p {
 .galeria img {
     width: 100%;
     border-radius: 5px;
+    cursor: pointer;
+    object-fit: cover;
+    object-position: 50% 50%; 
+    height: 120px;
 }
 
 button, .btn {
