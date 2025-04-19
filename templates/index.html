@@ -1,0 +1,45 @@
+{% extends "template.html" %}
+
+{% block title %}
+    Reliquia - Servidor Minecraft
+{% endblock %}
+
+{% block extra_css %} 
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="intro">
+    <h1>Reliquia</h1>
+    <p class="intro-text">
+        Um servidor de Minecraft com história.
+    </p>
+    <a href="{{ url_for('history') }}" class="btn">Ver Histórias</a>
+</section>
+
+<section class="historico-preview">
+    <h2>Histórico por Versões</h2>
+    <p>Veja imagens e mudanças marcantes em cada fase do servidor:</p>
+    <div class="version-links">
+        <a href="{{ url_for('history') }}#versao-1">Versão 1</a>
+        <a href="{{ url_for('history') }}#versao-2">Versão 2</a>
+        <a href="{{ url_for('history') }}#versao-3">Versão 3</a>
+    </div>
+</section>
+
+<section class="experiencias-preview">
+    <h2>Experiências dos Jogadores</h2>
+    <p>Relatos e momentos marcantes contados pela própria comunidade.</p>
+    <a href="{{ url_for('experiences') }}" class="btn">Ver Experiências</a>
+</section>
+
+<section class="chamada-final">
+    <h2>Junte-se à Reliquia</h2>
+    <p>Entre agora e faça parte dessa jornada entre versões e eras!</p>
+    <div class="actions">
+        <a href="https://discord.gg/5tNdasxqJ8" class="btn">Entrar no Discord</a>
+    </div>
+</section>
+
+{% endblock %}

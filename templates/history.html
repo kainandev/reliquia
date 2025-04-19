@@ -1,0 +1,205 @@
+{% extends "template.html" %}
+
+{% block title %}
+História - Reliquia
+{% endblock %}
+
+
+{% block extra_css %} 
+<link rel="stylesheet" href="{{ url_for('static', filename='history.css') }}">
+{% endblock %}
+
+{% block content %}   
+<section class="historia">
+    <h2 id="versao-3">Versão 3.0 - Atual</h2>
+    <p>A versão 3.0 trouxe muitas novidades e mapas incríveis. Veja abaixo a galeria e baixe o mapa!</p>
+    
+    <div class="note">
+        <p>História ainda a ser adicionada!</p>
+    </div>
+    
+    <button class="btn danger">Baixar Mapa .zip</button>
+    <button class="btn danger">Baixar Mapa .mcworld</button>
+    
+    <div class="galeria" data-version="3">
+        {% set imagens = version_images['3'] %}
+        
+        {% for img in imagens[:10] %}
+        <img src="{{ img }}" loading="lazy" alt="Imagem versão 3" onclick="openModal(this.src)" class="preview">
+        {% endfor %}
+        
+        {% if imagens|length > 10 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% endif %}
+    </div>
+    
+</section>
+
+<section class="historia">
+    <h2 id="versao-2">Versão 2.0</h2>
+    <p>A versão 2.0 foi a transição entre grandes mudanças no servidor. Veja mais abaixo!</p>
+    
+    <a class="btn" href="{{ url_for('static', filename='maps/Reliquia_2.mcworld') }}" download>Baixar Mapa .mcworld</a>
+    
+    <div class="galeria" data-version="2">
+        {% set imagens = version_images['2'] %}
+        
+        {% for img in imagens[:10] %}
+        <img src="{{ img }}" loading="lazy" alt="Imagem versão 2" onclick="openModal(this.src)" class="preview">
+        {% endfor %}
+        
+        {% if imagens|length > 10 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% endif %}
+    </div>
+</section>
+
+<section class="historia">
+    <h2 id="versao-1">Versão 1.0</h2>
+    <p>O que dizer do Reliquia 1? Foi onde tudo praticamente começou.</p>
+    
+    <p>Esse foi o primeiro servidor, contando com apenas dois players: eu, Kainan, e o João Willian, um amigo de escola de longa data.</p>
+    
+    <p>A princípio, era só mais um daqueles servidores que eu criava por criar, só pra jogar Minecraft sozinho. Mas acabei chamando o João pra jogar junto, e assim começamos a aventura. Era um mapa simples, mas um dos que mais me dediquei na construção.</p>
+    
+    <p>O servidor rodava na versão Bedrock Edition, e a gente jogava pelo celular. Passávamos horas ali, construindo nossas bases.</p>
+    
+    <p>Tenho uma saudade desse servidor. O mundo que criamos hoje existe só em fotos e lembranças guardadas na memória.</p>
+    
+    <p>Daria pra falar muita coisa sobre ele — foi lá por meados de 2020, em plena pandemia — mas hoje, tudo isso virou só lembrança.</p>
+    
+    <div class="note">
+        <p>O servidor foi criado em 2020, e o mapa original não existe mais!</p>
+    </div>
+    
+    <div class="galeria" data-version="1">
+        {% set imagens = version_images['1'] %}
+        
+        {% for img in imagens[:10] %}
+        <img src="{{ img }}" loading="lazy" alt="Imagem versão 1" onclick="openModal(this.src)" class="preview">
+        {% endfor %}
+        
+        {% if imagens|length > 10 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% endif %}
+    </div>
+    
+</section>
+
+
+<script>
+    function loadMore(button) {
+        const images = JSON.parse(button.dataset.images);
+        const container = button.parentElement;
+        
+        images.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.loading = 'lazy';
+            img.alt = 'Imagem versão';
+            img.className = 'preview';
+            img.onclick = () => openModal(src);
+            container.insertBefore(img, button);
+        });
+        
+        button.remove();
+    }
+</script>
+
+
+<!-- Modal -->
+<div id="imageModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content-wrapper" onclick="event.stopPropagation()">
+  
+      <!-- Lado esquerdo: Imagem -->
+      <div class="modal-image-section">
+        <img class="modal-image" id="modalImage">
+        <p id="imageName" class="image-name"></p>
+      </div>
+  
+      <!-- Lado direito: Comentários -->
+      <div class="modal-comments-section">
+        <form onsubmit="return enviarComentario()" class="comentario-form">
+          <input type="text" id="nickComentario" placeholder="Seu nick" required>
+          <input type="text" id="comentarioTexto" placeholder="Escreva um comentário..." required>
+          <input type="hidden" id="imageNameHidden">
+          <button type="submit">Enviar</button>
+        </form>
+  
+        <div id="comentariosContainer" class="comentarios-list"></div>
+      </div>
+  
+    </div>
+    <span class="close" onclick="closeModal(event)">&times;</span>
+  </div>
+  
+
+<!-- Script Modal -->
+<script>
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImage");
+    
+    function openModal(src) {
+        modal.style.display = "flex";
+        modalImg.src = src;
+        
+        const name = src.split('/').pop();
+        document.getElementById('imageName').textContent = name;
+    }
+    
+    
+    function closeModal(event) {
+        if (event.target === modal || event.target.className === 'close') {
+            modal.style.display = "none";
+            modalImg.src = "";
+        }
+    }
+</script>
+
+<script>
+    function openModal(src) {
+        modal.style.display = "flex";
+        modalImg.src = src;
+        
+        const name = src.split('/').pop();
+        document.getElementById('imageName').textContent = name;
+        document.getElementById('imageNameHidden').value = name;
+        
+        carregarComentarios(name);
+    }
+    
+    function carregarComentarios(imageName) {
+        fetch(`/comentarios/${imageName}`)
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('comentariosContainer');
+            container.innerHTML = "";
+            data.forEach(com => {
+                const div = document.createElement('div');
+                div.className = "comentario";
+                div.innerHTML = `<strong>${com.nick}:</strong>${com.comentario} <small>${com.data}</small>`;
+                container.appendChild(div);
+            });
+        });
+    }
+    
+    function enviarComentario() {
+        const nick = document.getElementById('nickComentario').value;
+        const comentario = document.getElementById('comentarioTexto').value;
+        const imageName = document.getElementById('imageNameHidden').value;
+        
+        fetch('/comentar-imagem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ nick, comentario, image_name: imageName })
+        }).then(() => {
+            document.getElementById('comentarioTexto').value = '';
+            carregarComentarios(imageName);
+        });
+        
+        return false;
+    }
+</script>
+
+
+{% endblock %}

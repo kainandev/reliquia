@@ -1,0 +1,43 @@
+
+{% extends "template.html" %}
+
+{% block title %}
+Experiências - Reliquia
+{% endblock %}
+
+{% block extra_css %} 
+    <link rel="stylesheet" href="{{ url_for('static', filename='experiences.css') }}">
+{% endblock %}
+    
+{% block content %}   
+
+    <section class="experiencias">
+        <h2>Compartilhe sua experiência!</h2>
+        <form action="/submit-depoimento" method="post">
+            <input type="text" name="nick" placeholder="Seu Nick" required>
+            <textarea name="depoimento" placeholder="Conte sua experiência..." required rows="6"></textarea>
+            
+            <select name="versao" required>
+                <option value="" disabled selected>Selecione a versão</option>
+                {% for v in versoes %}
+                    <option value="{{ v }}">Versão {{ v }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">Enviar</button>
+        </form>
+        
+        <h2>Experiências dos Jogadores</h2>
+        <div class="galeria">
+            {% for d in depoimentos %}
+            <div class="depoimento dep-{{ d.versao[0:1] }}">
+                <h3>{{ d.nick }}  <small>Versão do Servidor: <b>{{ d.versao }}</b></small></h3>
+                <p>{{ d.mensagem }}</p>
+                <small>Enviado em: {{ d.data }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        
+    </section>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+            Reliquia - Servidor Minecraft
+        {% endblock %}
+    </title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_css %} {% endblock %} <!-- Placeholder for additional CSS files -->
+
+</head>
+<body>
+    <header>
+        <h1>Servidor <span>Reliquia</span></h1>
+        <p>Servidor de Minecraft multiplayer</p>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('history') }}">História</a></li>
+                <li><a href="{{ url_for('experiences') }}">Experiências</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+
+    <footer>
+        <p>&copy; 2025 Reliquia - Todos os direitos reservados</p>
+    </footer>
+</body>
+</html>
