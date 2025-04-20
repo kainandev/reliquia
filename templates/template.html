@@ -16,7 +16,7 @@
 <body>
     <header>
         <h1>Servidor <span>Reliquia</span></h1>
-        <p>Servidor de Minecraft multiplayer</p>
+        <sub>Servidor de Minecraft multiplayer</sub>
         <nav>
             <ul>
                 <li><a href="{{ url_for('index') }}">Home</a></li>
@@ -26,8 +26,10 @@
         </nav>
     </header>
 
-    {% block content %}
-    {% endblock %}
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 
     <footer>
         <p>&copy; 2025 Reliquia - Todos os direitos reservados</p>

@@ -24,70 +24,179 @@ História - Reliquia
     <div class="galeria" data-version="3">
         {% set imagens = version_images['3'] %}
         
-        {% for img in imagens[:10] %}
+        {% for img in imagens[:11] %}
         <img src="{{ img }}" loading="lazy" alt="Imagem versão 3" onclick="openModal(this.src)" class="preview">
         {% endfor %}
         
-        {% if imagens|length > 10 %}
-        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% if imagens|length > 11 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[11:] | tojson }}'>Ver mais fotos</button>
         {% endif %}
     </div>
     
 </section>
 
+<hr>
+
 <section class="historia">
     <h2 id="versao-2">Versão 2.0</h2>
-    <p>A versão 2.0 foi a maior de todas as versões no servidor.</p>
-
-    <p>Essa versão foi registrado ao todo mais de 10 players, as vezes jogando simultaneamente de 4 a 6 pessoas no servidor.</p>
-
-    <p>Nessa versão participaram:</p>
+    <p>A versão <span class="highlight">2.0</span> foi a maior de todas as versões no servidor.</p>
     
+    <p>Essa versão registrou, ao todo, mais de 8 jogadores, às vezes jogando simultaneamente de 4 a 6 pessoas no servidor.</p>
+    
+    <p>Nessa versão, participaram:</p>
     <ul>
-        <li>[kainan187107] - Kainan H. [Admin]</li>
-        <li>[Jambrador] Gustavo Lourenço</li>
-        <li>[Guinanas] Guilherme Pedro</li>
-        <li>[...] Ricardo</li>
-        <li>[Calesso] Carlos</li>
-        <li>[...] Kaue [Raro]</li>
-        <li>[...] Luan Padilha [Raro]</li>
-        <li></li>
-        <li></li>
-        <li></li>
+        <li>[<span class="highlight">kainan187107</span>] - <span class="highlight">Kainan H.</span> [Admin]</li>
+        <li>[<span class="highlight">Jambrador</span>] <span class="highlight">Gustavo Lourenço</span></li>
+        <li>[<span class="highlight">Guinanas</span>] <span class="highlight">Guilherme Pedro</span></li>
+        <li>[...] <span class="highlight">Ricardo</span></li>
+        <li>[<span class="highlight">Calesso</span>] <span class="highlight">Carlos</span></li>
+        <li>[...] <span class="highlight">Kaue</span> [Raro]</li>
+        <li>[...] <span class="highlight">Luan Padilha</span> [Raro]</li>
     </ul>
-
+    
+    <p>
+        Depois de um bom tempo desde a primeira versão do servidor <span class="highlight">Reliquia 1</span>, decidi criar um novo mundo em servidor 
+        (não costumo jogar no singleplayer, mas sim em servidor). Construi uma casa no meio do <span class="highlight">spawn</span>, e foi aí que o 
+        <span class="highlight">Gustavo</span> também quis jogar.
+    </p>
+    
+    <p>
+        Nunca contei isso, mas, a princípio, eu tinha criado esse mapa para ser algo parecido com <span class="highlight">Stardew Valley</span> 
+        (sim, isso mesmo), pois eu havia jogado bastante <span class="highlight">Stardew Valley</span> (por volta de 2 meses seguidos) antes de criar o servidor.
+    </p>
+    
+    <p>
+        Por isso, no <span class="highlight">spawn</span> do servidor havia uma plantação de trigo e uma <span class="highlight">Casa hobbit</span>. 
+        Esse era o início do servidor, antes de todos entrarem.
+    </p>
+    
+    <h4><strong>Imagem do spawn:</strong></h4>
+    <div class="cite-images" data-version="2">
+        <img src="{{ url_for('static', filename='img/2/07173c62-1450-4600-a26f-1c377f920336.jpeg') }}" alt="Spawn do servidor" class="preview" loading="lazy" onclick="openModal(this.src)">
+        <img src="{{ url_for('static', filename='img/2/0f4cecec-2bf1-4ecb-b2b9-fa3ee3bbba1a.jpeg') }}" alt="Spawn do servidor" class="preview" loading="lazy" onclick="openModal(this.src)">
+    </div>
+    
+    <p>
+        Antes ainda havia uma casa no lugar onde hoje fica a <span class="highlight">Mesa de Encantamento</span>. 
+        Ela era feita de tijolos de <span class="highlight">deepslate</span>, mas apenas eu e o <span class="highlight">Gustavo</span> lembramos dela, 
+        pois logo a destruímos. Era a única construção existente no servidor antes de tudo. Inclusive, sobrevivemos a várias hordas de monstros nessa casa, mas depois a destruímos 
+        e construímos novas casas ao redor do <span class="highlight">spawn</span>.
+    </p>
+    
+    <p>
+        Eu construí a <span class="highlight">casa hobbit</span>, e ele a <span class="highlight">Torre Encantada</span> (feita de tijolos do 
+        <span class="highlight">Nether</span>). Particularmente, nessa versão, eu não construía muito...
+    </p>
+    
+    <div class="cite-images" data-version="2">
+        <div>
+            <h4>Casa Hobbit:</h4>
+            <img src="{{ url_for('static', filename='img/2/41f9818a-697c-4b0e-9334-f65f66ae5cb2.jpeg') }}" alt="Casa Hobbit" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+        <div>
+            <h4>Torre Encantada:</h4>
+            <img src="{{ url_for('static', filename='img/2/db5d72b2-45a4-413c-b91e-864906c44119.jpeg') }}" alt="Spawn do servidor" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+    </div>
+    
+    <p>
+        Logo em seguida, entrou o <span class="highlight">Guilherme</span>, que também construiu sua base, perto do rio/lago, logo após as avenidas com árvores.
+    </p>
+    <h4>Casa de Guilherme:</h4>
+    <div class="cite-images" data-version="2">
+        <div>
+            <img src="{{ url_for('static', filename='img/2/722217a2-fcf2-43cd-b182-438d0dc5405f.jpeg') }}" alt="Frente da casa do Guilherme" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+        <div>
+            <img src="{{ url_for('static', filename='img/2/072e0f7b-0318-470e-9d8a-e2de6b19f038.jpeg') }}" alt="Lado da casa de Guilherme" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+    </div>
+    
+    <p>
+        Em seguida, entraram <span class="highlight">Ricardo</span> e <span class="highlight">Carlos</span> — os desbravadores do 
+        <span class="highlight">Minecraft</span>. Literalmente, eles exploraram o servidor por completo, e são os donos da maior casa do servidor, 
+        sendo os mais avançados dentro do jogo.
+    </p>
+    
+    <h4>Casa de Carlos e Ricardo:</h4>
+    <div class="cite-images" data-version="2">
+        <div>
+            <img src="{{ url_for('static', filename='img/2/720be2e8-125b-46a1-b02a-ce1b4a1a0459.jpeg') }}" alt="Spawn do servidor" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+        <div>
+            <img src="{{ url_for('static', filename='img/2/Imagem do WhatsApp de 2023-04-07 à(s) 19.45.47_4b75e627.jpg') }}" alt="Spawn do servidor" class="preview" loading="lazy" onclick="openModal(this.src)">
+        </div>
+    </div>
+    
+    <p>
+        No meio desse grupo, entrou também o <span class="highlight">Kaue</span>, que construiu uma casa em cima da minha <span class="highlight">casa hobbit</span> — 
+        uma construção parecida com a <span class="highlight">Mansão Stark</span>. O <span class="highlight">Luan</span> também entrou no servidor, 
+        mas jogou bem pouco.
+    </p>
+    
+    <p>
+        Outros jogadores também chegaram a entrar no servidor, conforme os registros (logs), mas eu não estava online para presenciar.
+    </p>
+    
+    <p>
+        O servidor permaneceu ativo durante vários meses, com muitas pessoas entrando e jogando livremente. Inclusive, foi necessário mudar de host após ultrapassarmos 
+        três jogadores simultâneos, pois ocorria <span class="highlight">Lag Damage</span>. Migramos do <span class="highlight">Aternos</span> 
+        para a <span class="highlight">Enxada Host</span>, o que resolveu o problema de <span class="highlight">Lag Damage</span> e também melhorou bastante o Ping.
+    </p>
+    
+    <p>
+        O servidor começou em meados de <span class="highlight">24/10/2022</span> e durou até seu último momento online, em <span class="highlight">21/01/2025</span>, 
+        ficando offline às <span class="highlight">00:00 do dia 22/01/2025</span>.
+    </p>
+    
+    
     <div class="note">
-        <p>Falta completar a história do servidor!</p>
+        <p><strong>Falta completar a história do servidor!</strong></p>
+        <p>Se quiser completar a história entre em contato!</p>
     </div>
     
     <a class="btn" href="{{ url_for('static', filename='maps/Reliquia_2.mcworld') }}" download>Baixar Mapa .mcworld</a>
     
+    <h3>Galeria:</h3>
     <div class="galeria" data-version="2">
         {% set imagens = version_images['2'] %}
         
-        {% for img in imagens[:10] %}
+        {% for img in imagens[:11] %}
         <img src="{{ img }}" loading="lazy" alt="Imagem versão 2" onclick="openModal(this.src)" class="preview">
         {% endfor %}
         
-        {% if imagens|length > 10 %}
-        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% if imagens|length > 11 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[11:] | tojson }}'>Ver mais fotos</button>
         {% endif %}
     </div>
 </section>
 
+<hr>
+
 <section class="historia">
     <h2 id="versao-1">Versão 1.0</h2>
-    <p>O que dizer do Reliquia 1? Foi onde tudo praticamente começou.</p>
+    <p>O que dizer do <span class="highlight">Reliquia 1</span>? Foi onde tudo praticamente começou.</p>
     
-    <p>Esse foi o primeiro servidor, contando com apenas dois players: eu, Kainan, e o João Willian, um amigo de escola de longa data.</p>
+    <p>Esse foi o primeiro servidor, contando com apenas dois players: eu, <span class="highlight">Kainan</span>, e o <span class="highlight">João Willian</span>, um amigo de escola de longa data.</p>
     
-    <p>A princípio, era só mais um daqueles servidores que eu criava por criar, só pra jogar Minecraft sozinho. Mas acabei chamando o João pra jogar junto, e assim começamos a aventura. Era um mapa simples, mas um dos que mais me dediquei na construção.</p>
+    <p>
+        A princípio, era só mais um daqueles servidores que eu criava por criar, só pra jogar <span class="highlight">Minecraft</span> sozinho. 
+        Mas acabei chamando o <span class="highlight">João</span> pra jogar junto, e assim começamos a aventura. 
+        Era um mapa simples, mas um dos que mais me dediquei na construção.
+    </p>
     
-    <p>O servidor rodava na versão Bedrock Edition, e a gente jogava pelo celular. Passávamos horas ali, construindo nossas bases.</p>
+    <p>
+        O servidor rodava na versão <span class="highlight">Bedrock Edition</span>, e a gente jogava pelo celular. 
+        Passávamos horas ali, construindo nossas bases.
+    </p>
     
     <p>Tenho uma saudade desse servidor. O mundo que criamos hoje existe só em fotos e lembranças guardadas na memória.</p>
     
-    <p>Daria pra falar muita coisa sobre ele — foi lá por meados de 2020, em plena pandemia — mas hoje, tudo isso virou só lembrança.</p>
+    <p>
+        Daria pra falar muita coisa sobre ele — foi lá por meados de <span class="highlight">2020</span>, em plena pandemia — 
+        mas hoje, tudo isso virou só lembrança.
+    </p>
+    
     
     <div class="note">
         <p>O servidor foi criado em 2020, e o mapa original não existe mais!</p>
@@ -96,12 +205,12 @@ História - Reliquia
     <div class="galeria" data-version="1">
         {% set imagens = version_images['1'] %}
         
-        {% for img in imagens[:10] %}
+        {% for img in imagens[:11] %}
         <img src="{{ img }}" loading="lazy" alt="Imagem versão 1" onclick="openModal(this.src)" class="preview">
         {% endfor %}
         
-        {% if imagens|length > 10 %}
-        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[10:] | tojson }}'>Ver mais fotos</button>
+        {% if imagens|length > 11 %}
+        <button class="btn-view-more" onclick="loadMore(this)" data-images='{{ imagens[11:] | tojson }}'>Ver mais fotos</button>
         {% endif %}
     </div>
     
@@ -131,29 +240,29 @@ História - Reliquia
 <!-- Modal -->
 <div id="imageModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content-wrapper" onclick="event.stopPropagation()">
-  
-      <!-- Lado esquerdo: Imagem -->
-      <div class="modal-image-section">
-        <img class="modal-image" id="modalImage">
-        <p id="imageName" class="image-name"></p>
-      </div>
-  
-      <!-- Lado direito: Comentários -->
-      <div class="modal-comments-section">
-        <form onsubmit="return enviarComentario()" class="comentario-form">
-          <input type="text" id="nickComentario" placeholder="Seu nick" required>
-          <input type="text" id="comentarioTexto" placeholder="Escreva um comentário..." required>
-          <input type="hidden" id="imageNameHidden">
-          <button type="submit">Enviar</button>
-        </form>
-  
-        <div id="comentariosContainer" class="comentarios-list"></div>
-      </div>
-  
+        
+        <!-- Lado esquerdo: Imagem -->
+        <div class="modal-image-section">
+            <img class="modal-image" id="modalImage">
+            <p id="imageName" class="image-name"></p>
+        </div>
+        
+        <!-- Lado direito: Comentários -->
+        <div class="modal-comments-section">
+            <form onsubmit="return enviarComentario()" class="comentario-form">
+                <input type="text" id="nickComentario" placeholder="Seu nick" required>
+                <textarea type="text" id="comentarioTexto" placeholder="Escreva um comentário..." rows="4" required></textarea>
+                <input type="hidden" id="imageNameHidden">
+                <button type="submit">Enviar</button>
+            </form>
+            
+            <div id="comentariosContainer" class="comentarios-list"></div>
+        </div>
+        
     </div>
     <span class="close" onclick="closeModal(event)">&times;</span>
-  </div>
-  
+</div>
+
 
 <!-- Script Modal -->
 <script>
