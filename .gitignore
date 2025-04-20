@@ -1,0 +1,5 @@
+# Ignorar o arquivo database.db
+database.db
+
+# Padrões comuns para projetos Python
+__pycache__/
