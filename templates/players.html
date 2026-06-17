@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Jogadores — {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Player card ── */
+.player-card {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: 3px;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+  text-decoration: none;
+  display: block;
+}
+.player-card:hover {
+  border-color: var(--mc-green);
+  transform: translateY(-2px);
+}
+.player-card.master-card   { border-top: 2px solid var(--mc-gold); }
+.player-card.moderador-card{ border-top: 2px solid var(--mc-purple); }
+.player-card.jogador-card  { border-top: 2px solid var(--mc-green); }
+.player-card.forasteiro-card{ border-top: 2px solid var(--mc-muted); }
+
+.player-skin-stage {
+  background: radial-gradient(ellipse at 50% 90%, rgba(63,185,80,.15) 0%, transparent 70%),
+              linear-gradient(180deg, #091a0a 0%, #0e1c10 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+.player-skin-stage.master-stage {
+  background: radial-gradient(ellipse at 50% 90%, rgba(210,153,34,.2) 0%, transparent 70%),
+              linear-gradient(180deg, #1a1200 0%, #1a1a0a 100%);
+}
+.player-skin-stage.moderador-stage {
+  background: radial-gradient(ellipse at 50% 90%, rgba(163,113,247,.2) 0%, transparent 70%),
+              linear-gradient(180deg, #0e0a1a 0%, #120e1a 100%);
+}
+.player-skin-stage::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30px;
+  background: linear-gradient(0deg, var(--mc-surface) 0%, transparent 100%);
+}
+.player-skin-img {
+  height: 165px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,.5));
+  position: relative;
+  z-index: 1;
+}
+.player-card-body {
+  padding: .85rem 1rem;
+  border-top: 1px solid var(--mc-border);
+}
+.player-username {
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--mc-text);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-username:hover { color: var(--mc-teal); }
+
+/* Fallback avatar when no MC nick */
+.player-no-skin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 165px;
+  font-size: 4rem;
+  opacity: .18;
+  position: relative;
+  z-index: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- ── Header ── -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="fs-4 fw-bold mb-0">
+        <i class="bi bi-people-fill text-mc-green me-2"></i>Jogadores da Reliquia
+      </h1>
+      <small class="text-mc-muted">{{ players|length }} jogador{{ 'es' if players|length != 1 }}</small>
+    </div>
+  </div>
+
+  <!-- ── Filters ── -->
+  <div class="mc-filter-bar mb-4">
+    <form method="GET" action="{{ url_for('players') }}" class="d-flex flex-wrap gap-2 align-items-center">
+      <div class="flex-grow-1" style="min-width:180px;">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-mc-surface-2 border-mc text-mc-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" name="q" class="form-control mc-input"
+                 placeholder="Buscar jogador…" value="{{ search }}">
+        </div>
+      </div>
+
+      <!-- Role filters -->
+      <div class="d-flex gap-1 flex-wrap">
+        <a href="{{ url_for('players', q=search) }}"
+           class="btn btn-sm {% if not role_filter %}btn-mc-primary{% else %}btn-mc-secondary{% endif %}">
+          Todos
+        </a>
+        {% for role in roles %}
+        <a href="{{ url_for('players', role=role, q=search) }}"
+           class="btn btn-sm {% if role_filter == role %}btn-mc-primary{% else %}btn-mc-secondary{% endif %}">
+          <span class="mc-role mc-role-{{ role|lower }}">{{ role }}</span>
+        </a>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-mc-secondary btn-sm">
+        <i class="bi bi-funnel-fill"></i>
+      </button>
+      {% if search %}
+      <a href="{{ url_for('players', role=role_filter) }}" class="btn btn-mc-secondary btn-sm">✕</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- ── Player grid ── -->
+  {% if players %}
+  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-3">
+    {% for p in players %}
+    <div class="col">
+      <a href="{{ url_for('profile', username=p.username) }}"
+         class="player-card {{ p.role|lower }}-card h-100">
+
+        <!-- Skin stage -->
+        <div class="player-skin-stage {{ p.role|lower }}-stage">
+          {% if p.minecraft_nick %}
+          <img src="https://mc-heads.net/body/{{ p.minecraft_nick }}/150"
+               class="player-skin-img"
+               alt="{{ p.username }}"
+               onerror="this.outerHTML='<div class=\'player-no-skin\'>👤</div>'">
+          {% else %}
+          <div class="player-no-skin">👤</div>
+          {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="player-card-body">
+          <span class="player-username">{{ p.username }}</span>
+
+          {% if p.minecraft_nick %}
+          <small class="text-mc-muted d-block text-truncate mt-1" style="font-size:.72rem;">
+            <i class="bi bi-controller me-1"></i>{{ p.minecraft_nick }}
+          </small>
+          {% endif %}
+
+          <div class="d-flex align-items-center justify-content-between mt-2">
+            <span class="mc-role mc-role-{{ p.role|lower }}">{{ p.role }}</span>
+            {% if p.post_count > 0 %}
+            <small class="text-mc-muted" style="font-size:.72rem;">
+              <i class="bi bi-collection me-1"></i>{{ p.post_count }}
+            </small>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="mc-empty mc-card p-5">
+    <span class="mc-empty-icon">👥</span>
+    <h3 class="fs-5 mb-2">Nenhum jogador encontrado</h3>
+    <p class="text-mc-muted mb-3">
+      {% if search %}Nenhum resultado para "<strong>{{ search }}</strong>".
+      {% elif role_filter %}Nenhum jogador com cargo <strong>{{ role_filter }}</strong>.
+      {% else %}Ainda não há jogadores cadastrados.{% endif %}
+    </p>
+    {% if not current_user %}
+    <a href="{{ url_for('register') }}" class="btn btn-mc-primary">
+      <i class="bi bi-person-plus-fill me-1"></i>Criar Conta
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── Role legend ── -->
+  {% if players %}
+  <div class="mt-5 mc-card p-3">
+    <h3 class="fs-6 fw-bold text-mc-muted mb-3">
+      <i class="bi bi-info-circle me-1"></i>Cargos do Servidor
+    </h3>
+    <div class="row g-2">
+      <div class="col-sm-6 col-md-3">
+        <div class="p-2 rounded-1 d-flex align-items-start gap-2"
+             style="background:rgba(139,148,158,.07);border:1px solid rgba(139,148,158,.2);">
+          <span class="mc-role mc-role-forasteiro mt-1">Forasteiro</span>
+          <small class="text-mc-muted" style="font-size:.77rem;">
+            Pode comentar e reagir a posts.
+          </small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <div class="p-2 rounded-1 d-flex align-items-start gap-2"
+             style="background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.2);">
+          <span class="mc-role mc-role-jogador mt-1">Jogador</span>
+          <small class="text-mc-muted" style="font-size:.77rem;">
+            Pode criar posts e publicar na timeline.
+          </small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <div class="p-2 rounded-1 d-flex align-items-start gap-2"
+             style="background:rgba(163,113,247,.07);border:1px solid rgba(163,113,247,.2);">
+          <span class="mc-role mc-role-moderador mt-1">Moderador</span>
+          <small class="text-mc-muted" style="font-size:.77rem;">
+            Modera posts, comentários e usuários.
+          </small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <div class="p-2 rounded-1 d-flex align-items-start gap-2"
+             style="background:rgba(210,153,34,.07);border:1px solid rgba(210,153,34,.2);">
+          <span class="mc-role mc-role-master mt-1">Master</span>
+          <small class="text-mc-muted" style="font-size:.77rem;">
+            Acesso total ao servidor e admin.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

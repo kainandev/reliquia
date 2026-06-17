@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }} — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block extra_css %}
+<style>
+.mc-achievement-toast{display:inline-flex;align-items:center;gap:.6rem;background:#1a1100;border:2px solid;border-radius:0;padding:.45rem .7rem .45rem .45rem;cursor:default;transition:transform .15s,box-shadow .15s;position:relative;min-width:180px;max-width:260px;}
+.mc-achievement-toast:hover{transform:translateY(-2px);}
+.mc-achievement-toast::before{content:'Achievement Unlocked!';position:absolute;top:-1.3rem;left:0;right:0;text-align:center;font-family:'Press Start 2P',monospace;font-size:.45rem;color:#FFAA00;white-space:nowrap;letter-spacing:.04em;}
+.ach-icon-wrap{width:38px;height:38px;background:#1c1600;border:2px solid rgba(0,0,0,.5);flex-shrink:0;display:flex;align-items:center;justify-content:center;image-rendering:pixelated;}
+.ach-icon-wrap img{width:32px;height:32px;image-rendering:pixelated;}
+.ach-text{min-width:0;}
+.ach-name{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ach-desc{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.achievements-section{margin-top:1.5rem;}
+.achievements-grid{display:flex;flex-wrap:wrap;gap:2.2rem .8rem;padding-top:1.5rem;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4">
+
+    <!-- LEFT: Profile card + achievements -->
+    <div class="col-md-4 col-lg-3">
+      <div class="mc-card overflow-hidden">
+        <!-- Skin -->
+        <div class="mc-skin-container" style="min-height:260px;">
+          {% if profile_user.minecraft_nick %}
+          <img src="https://mc-heads.net/body/{{ profile_user.minecraft_nick }}/200"
+               style="height:220px;image-rendering:pixelated;position:relative;z-index:1;"
+               alt="{{ profile_user.minecraft_nick }}"
+               onerror="this.parentElement.innerHTML='<span style=\'font-size:5rem;opacity:.3;\'>👤</span>'">
+          {% else %}<span style="font-size:5rem;opacity:.3;">👤</span>{% endif %}
+        </div>
+        <div class="p-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <h1 class="fs-5 fw-bold mb-0">{{ profile_user.username }}</h1>
+            <span class="mc-role mc-role-{{ profile_user.role|lower }}">{{ profile_user.role }}</span>
+          </div>
+          {% if profile_user.minecraft_nick %}
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-controller text-mc-teal"></i>
+            <code class="mc-code">{{ profile_user.minecraft_nick }}</code>
+          </div>
+          {% endif %}
+          <div class="d-flex align-items-center gap-2 text-mc-muted" style="font-size:.8rem;">
+            <i class="bi bi-calendar-check"></i>Membro desde {{ profile_user.created_at|fmtdate }}
+          </div>
+          <div class="d-flex align-items-center gap-2 text-mc-muted mt-1" style="font-size:.8rem;">
+            <i class="bi bi-file-post"></i>{{ posts|length }} post{{ 's' if posts|length!=1 }} no fórum
+          </div>
+          {% if timeline_posts %}
+          <div class="d-flex align-items-center gap-2 text-mc-muted mt-1" style="font-size:.8rem;">
+            <i class="bi bi-clock-history"></i>{{ timeline_posts|length }} evento{{ 's' if timeline_posts|length!=1 }} na timeline
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Achievements -->
+      {% if achievements %}
+      <div class="achievements-section">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi bi-trophy-fill text-mc-gold"></i>
+          <h3 class="fs-6 fw-bold mb-0">Conquistas</h3>
+          <span class="badge" style="background:rgba(210,153,34,.15);color:var(--mc-gold);border-radius:2px;font-size:.65rem;">{{ achievements|length }}</span>
+        </div>
+        <div class="achievements-grid">
+          {% for a in achievements %}
+          <div class="mc-achievement-toast"
+               style="border-color:{{ a.color }};box-shadow:0 0 8px {{ a.color }}33;"
+               data-bs-toggle="tooltip" data-bs-placement="top" title="{{ a.description }}">
+            <div class="ach-icon-wrap" style="border-color:{{ a.color }}44;">
+              <img src="https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/{{ a.icon }}.png"
+                   alt="{{ a.name }}" onerror="this.src='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/nether_star.png'">
+            </div>
+            <div class="ach-text">
+              <div class="ach-name" style="color:{{ a.color }};">{{ a.name }}</div>
+              <div class="ach-desc">{{ a.description[:32] }}{% if a.description|length>32 %}…{% endif %}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT: Posts + Timeline -->
+    <div class="col-md-8 col-lg-9">
+
+      <!-- Forum posts -->
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-collection-fill text-mc-green"></i>
+        <h2 class="fs-5 mb-0 fw-bold">Posts no Fórum</h2>
+      </div>
+      {% if posts %}
+      <div class="d-flex flex-column gap-2 mb-4">
+        {% for p in posts %}
+        <div class="post-card d-flex align-items-center gap-3 p-3">
+          <i class="bi bi-{% if p.status=='open' %}exclamation-circle-fill post-status-open{% elif p.status=='closed' %}check-circle-fill post-status-closed{% else %}archive-fill post-status-archived{% endif %} post-status-icon"></i>
+          <div class="flex-grow-1 min-w-0">
+            <a href="{{ url_for('forum_post',pid=p.id) }}" class="post-title-link d-block text-truncate">{{ p.title }}</a>
+            <small class="text-mc-muted">#{{ p.id }} · {{ p.created_at|fmtdate }}{% if p.version_tag %} · <span class="version-badge">v{{ p.version_tag }}</span>{% endif %}</small>
+          </div>
+          <span class="badge {% if p.status=='open' %}bg-success{% elif p.status=='closed' %}bg-danger{% else %}bg-secondary{% endif %}" style="font-size:.65rem;border-radius:2px;">{{ p.status|upper }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="mc-card p-3 text-center text-mc-muted mb-4" style="font-size:.85rem;">Nenhum post no fórum ainda.</div>
+      {% endif %}
+
+      <!-- Timeline events -->
+      {% if timeline_posts %}
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-clock-history text-mc-teal"></i>
+        <h2 class="fs-5 mb-0 fw-bold">Eventos na Timeline</h2>
+      </div>
+      <div class="d-flex flex-column gap-2">
+        {% for p in timeline_posts %}
+        <div class="post-card d-flex align-items-center gap-3 p-3">
+          <i class="bi bi-calendar-event text-mc-teal post-status-icon"></i>
+          <div class="flex-grow-1 min-w-0">
+            <a href="{{ url_for('history_view',hid=p.id) }}" class="post-title-link d-block text-truncate">{{ p.title }}</a>
+            <small class="text-mc-muted"><i class="bi bi-calendar3 me-1"></i>{{ p.event_date or p.created_at|fmtdate }}</small>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% block extra_js %}
+<script>
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el=>{
+  new bootstrap.Tooltip(el,{trigger:'hover'});
+});
+</script>
+{% endblock %}
+{% endblock %}

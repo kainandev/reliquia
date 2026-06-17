@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar Post' if post else 'Novo Post' }} — {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:860px;">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('forum') }}" class="btn btn-mc-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="fs-4 fw-bold mb-0">
+        {{ '✏️ Editar Post' if post else '📝 Novo Post' }}
+      </h1>
+      <small class="text-mc-muted">Markdown é suportado no conteúdo</small>
+    </div>
+  </div>
+
+  <div id="contentError" class="alert mc-alert alert-danger" style="display:none;">
+    <i class="bi bi-exclamation-circle me-2"></i>O conteúdo não pode estar vazio.
+  </div>
+
+  <div class="mc-card p-4">
+    <form method="POST" id="postForm"
+          action="{{ url_for('forum_edit', pid=post.id) if post else url_for('forum_new') }}"
+          onsubmit="return validatePostForm()">
+
+      <!-- Title -->
+      <div class="mb-3">
+        <label class="mc-label">Título <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control mc-input"
+               placeholder="Um título claro e descritivo…"
+               value="{{ post.title if post else '' }}" required maxlength="200">
+      </div>
+
+      <!-- Version tag -->
+      <div class="mb-3">
+        <label class="mc-label">Versão relacionada</label>
+        <select name="version_tag" class="form-select mc-input">
+          <option value="">Nenhuma versão específica</option>
+          {% for v in versions %}
+          <option value="{{ v.name }}"
+                  {% if post and post.version_tag == v.name %}selected{% endif %}>
+            v{{ v.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Content — NO required attribute, validated via JS -->
+      <div class="mb-3">
+        <label class="mc-label">Conteúdo <span class="text-danger">*</span></label>
+        <textarea name="content" id="editor" rows="12">{{ post.content if post else '' }}</textarea>
+      </div>
+
+      <!-- Image Upload -->
+      {% if has_perm('upload_photos') %}
+      <div class="mb-3">
+        <label class="mc-label">Adicionar Imagens</label>
+        <div class="mc-card p-3" style="background:var(--mc-surface-2);">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <input type="file" id="imgUpload" accept="image/*" multiple class="d-none">
+            <button type="button" class="btn btn-mc-secondary btn-sm"
+                    onclick="document.getElementById('imgUpload').click()">
+              <i class="bi bi-cloud-upload me-1"></i>Enviar Imagens
+            </button>
+            <small class="text-mc-muted">PNG, JPG, GIF, WebP</small>
+          </div>
+          <div id="uploadStatus" class="text-mc-muted" style="font-size:.8rem;"></div>
+          <div id="imagePreviewGrid" class="post-images-grid mt-2"></div>
+        </div>
+        <input type="hidden" name="image_urls" id="imageUrlsInput"
+               value="{{ post.image_urls if post else '[]' }}">
+      </div>
+      {% endif %}
+
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{{ url_for('forum_post', pid=post.id) if post else url_for('forum') }}"
+           class="btn btn-mc-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-mc-primary">
+          <i class="bi bi-{{ 'check-lg' if post else 'send-fill' }} me-1"></i>
+          {{ 'Salvar Alterações' if post else 'Publicar Post' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<script>
+// ── EasyMDE init ──
+const easyMDE = new EasyMDE({
+  element: document.getElementById('editor'),
+  spellChecker: false,
+  autosave: {
+    enabled: true,
+    uniqueId: 'forum-post-{{ post.id if post else "new" }}'
+  },
+  placeholder: 'Escreva seu post em Markdown…\n\n# Título\n\n**Negrito**, *itálico*, `código`\n\n```\nBloco de código\n```',
+  toolbar: [
+    'bold','italic','heading','|','quote','code',
+    'unordered-list','ordered-list','|',
+    'link','|','preview','side-by-side','fullscreen','|','guide'
+  ],
+  minHeight: '280px',
+});
+
+// ── Form validation (replaces native required) ──
+function validatePostForm() {
+  const content = easyMDE.value().trim();
+  const errBox  = document.getElementById('contentError');
+  if (!content) {
+    errBox.style.display = 'block';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+  errBox.style.display = 'none';
+  return true;
+}
+
+// ── Image upload ──
+{% if has_perm('upload_photos') %}
+let imageUrls = [];
+try {
+  const saved = document.getElementById('imageUrlsInput').value;
+  imageUrls = JSON.parse(saved) || [];
+} catch(e) { imageUrls = []; }
+renderPreviews();
+
+document.getElementById('imgUpload').addEventListener('change', async function() {
+  const files  = Array.from(this.files);
+  const status = document.getElementById('uploadStatus');
+  for (const file of files) {
+    status.textContent = `Enviando ${file.name}…`;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res  = await fetch('/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) {
+        imageUrls.push(data.url);
+        renderPreviews();
+        status.textContent = `✅ ${file.name} enviado!`;
+      } else {
+        status.textContent = `❌ Erro: ${data.error}`;
+      }
+    } catch(e) {
+      status.textContent = '❌ Erro ao enviar.';
+    }
+  }
+  document.getElementById('imageUrlsInput').value = JSON.stringify(imageUrls);
+  this.value = '';
+});
+
+function renderPreviews() {
+  const grid = document.getElementById('imagePreviewGrid');
+  grid.innerHTML = '';
+  imageUrls.forEach((url, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    wrap.innerHTML = `
+      <img src="${url}"
+           style="width:100%;height:120px;object-fit:cover;border-radius:3px;border:1px solid var(--mc-border);"
+           onclick="openLightbox('${url}')">
+      <button type="button" onclick="removeImg(${i})"
+              style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);
+                     border:none;color:#fff;border-radius:2px;width:22px;height:22px;
+                     font-size:.7rem;cursor:pointer;">✕</button>`;
+    grid.appendChild(wrap);
+  });
+  document.getElementById('imageUrlsInput').value = JSON.stringify(imageUrls);
+}
+
+function removeImg(i) {
+  imageUrls.splice(i, 1);
+  renderPreviews();
+}
+{% endif %}
+</script>
+{% endblock %}

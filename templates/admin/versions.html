@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% block title %}Versões — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-layers-fill text-mc-teal fs-5"></i>
+  <h1>Versões do Servidor</h1>
+</div>
+<div class="p-4">
+
+  <!-- New version -->
+  <div class="mc-card p-4 mb-4" style="border-top:2px solid var(--mc-green);">
+    <h2 class="fs-5 fw-bold mb-3"><i class="bi bi-plus-circle-fill text-mc-green me-2"></i>Nova Versão</h2>
+    <p class="text-mc-muted mb-3" style="font-size:.85rem;">Cria automaticamente um post fixado na Timeline e no Fórum.</p>
+    <form method="POST" action="{{ url_for('admin_version_new') }}">
+      <div class="row g-3">
+        <div class="col-md-3"><label class="mc-label">Nome <span class="text-danger">*</span></label><input type="text" name="name" class="form-control mc-input" placeholder="ex: 4.0" required></div>
+        <div class="col-md-3"><label class="mc-label">Início</label><input type="date" name="start_date" class="form-control mc-input"></div>
+        <div class="col-md-3"><label class="mc-label">Fim</label><input type="date" name="end_date" class="form-control mc-input"></div>
+        <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="is_current" id="isCurrentNew"><label class="form-check-label mc-label" for="isCurrentNew">Versão Atual</label></div></div>
+        <div class="col-12"><label class="mc-label">Descrição / Novidades</label><textarea name="description" class="form-control mc-input" rows="2" placeholder="Descreva as principais novidades…"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-mc-primary mt-3"><i class="bi bi-plus-lg me-1"></i>Criar Versão</button>
+    </form>
+  </div>
+
+  <!-- Versions list -->
+  <h2 class="fs-5 fw-bold mb-3">Versões Existentes</h2>
+  {% if versions %}
+  <div class="d-flex flex-column gap-3">
+    {% for v in versions %}
+    {% set vp_ids = version_player_map.get(v.id, []) %}
+    <div class="mc-card overflow-hidden {% if v.is_current %}border-start-green{% endif %}">
+      <div class="p-3">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h3 class="fs-5 fw-bold mb-0">v{{ v.name }}</h3>
+              {% if v.is_current %}<span class="badge" style="background:rgba(63,185,80,.15);color:var(--mc-green);border:1px solid rgba(63,185,80,.3);border-radius:2px;font-size:.65rem;"><span class="status-dot status-dot-open me-1"></span>ATUAL</span>{% endif %}
+            </div>
+            {% if v.description %}<p class="text-mc-muted mb-2" style="font-size:.85rem;">{{ v.description[:100] }}{% if v.description|length>100 %}…{% endif %}</p>{% endif %}
+            <div class="d-flex flex-wrap gap-3" style="font-size:.78rem;color:var(--mc-muted);">
+              {% if v.start_date %}<span><i class="bi bi-play-circle me-1"></i>{{ v.start_date }}</span>{% endif %}
+              {% if v.end_date %}<span><i class="bi bi-stop-circle me-1"></i>{{ v.end_date }}</span>{% endif %}
+              {% if v.post_id %}<a href="{{ url_for('history_view',hid=v.post_id) }}" class="text-mc-teal text-decoration-none"><i class="bi bi-clock-history me-1"></i>Ver na Timeline</a>{% endif %}
+            </div>
+            <!-- Players preview -->
+            {% if vp_ids %}
+            <div class="d-flex flex-wrap gap-1 mt-2 align-items-end">
+              {% for u in all_users if u.id in vp_ids %}{% if loop.index<=8 %}
+              <div title="{{ u.username }}" style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+                {% if u.minecraft_nick %}<img src="https://mc-heads.net/body/{{ u.minecraft_nick }}/30" style="height:36px;image-rendering:pixelated;">
+                {% else %}<div style="width:20px;height:36px;display:flex;align-items:center;justify-content:center;opacity:.4;font-size:.8rem;">👤</div>{% endif %}
+                <small style="font-size:.55rem;color:var(--mc-muted);max-width:36px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ u.username }}</small>
+              </div>
+              {% endif %}{% endfor %}
+              {% if vp_ids|length>8 %}<small class="text-mc-muted align-self-center" style="font-size:.72rem;">+{{ vp_ids|length-8 }} mais</small>{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          <button class="btn btn-mc-secondary btn-sm" onclick="toggleEditForm({{ v.id }})"><i class="bi bi-pencil-fill me-1"></i>Editar</button>
+        </div>
+
+        <!-- Edit form -->
+        <div id="editForm-{{ v.id }}" style="display:none;" class="mt-3 pt-3 border-top border-mc">
+          <form method="POST" action="{{ url_for('admin_version_edit',vid=v.id) }}">
+            <div class="row g-2">
+              <div class="col-md-3"><label class="mc-label">Nome</label><input type="text" name="name" class="form-control form-control-sm mc-input" value="{{ v.name }}" required></div>
+              <div class="col-md-3"><label class="mc-label">Início</label><input type="date" name="start_date" class="form-control form-control-sm mc-input" value="{{ v.start_date }}"></div>
+              <div class="col-md-3"><label class="mc-label">Fim</label><input type="date" name="end_date" class="form-control form-control-sm mc-input" value="{{ v.end_date }}"></div>
+              <div class="col-md-3 d-flex align-items-end"><div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="is_current" {% if v.is_current %}checked{% endif %}><label class="form-check-label mc-label">Atual</label></div></div>
+              <div class="col-12"><label class="mc-label">Descrição</label><textarea name="description" class="form-control form-control-sm mc-input" rows="2">{{ v.description }}</textarea></div>
+              <div class="col-md-6"><label class="mc-label">Link Mapa .zip</label><input type="text" name="map_zip" class="form-control form-control-sm mc-input" value="{{ v.map_zip }}"></div>
+              <div class="col-md-6"><label class="mc-label">Link Mapa .mcworld</label><input type="text" name="map_mcworld" class="form-control form-control-sm mc-input" value="{{ v.map_mcworld }}"></div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+              <button type="submit" class="btn btn-mc-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+              <button type="button" class="btn btn-mc-secondary btn-sm" onclick="toggleEditForm({{ v.id }})">Cancelar</button>
+            </div>
+          </form>
+
+          <!-- Players form -->
+          <div class="mt-3 pt-3 border-top border-mc">
+            <label class="mc-label mb-2"><i class="bi bi-people-fill me-1 text-mc-teal"></i>Jogadores desta versão</label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.35rem;max-height:220px;overflow-y:auto;padding:.5rem;" class="mc-card bg-mc-surface-2">
+              {% for u in all_users %}
+              <label style="display:flex;align-items:center;gap:.5rem;padding:.35rem .5rem;border-radius:2px;cursor:pointer;font-size:.82rem;border:1px solid transparent;transition:border-color .15s;"
+                     class="{% if u.id in vp_ids %}border-start-green{% endif %} perm-check-item">
+                <input type="checkbox" name="player_ids" value="{{ u.id }}"
+                       form="playersForm-{{ v.id }}"
+                       {% if u.id in vp_ids %}checked{% endif %}
+                       style="accent-color:var(--mc-green);">
+                {% if u.minecraft_nick %}
+                <img src="https://mc-heads.net/avatar/{{ u.minecraft_nick }}/20"
+                     style="width:20px;height:20px;image-rendering:pixelated;border-radius:2px;flex-shrink:0;" alt="" onerror="this.style.display='none'">
+                {% else %}<i class="bi bi-person-circle text-mc-muted flex-shrink-0"></i>{% endif %}
+                <span class="text-truncate">{{ u.username }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <form id="playersForm-{{ v.id }}" method="POST" action="{{ url_for('admin_version_players',vid=v.id) }}" class="mt-2">
+              <button type="submit" class="btn btn-mc-secondary btn-sm"><i class="bi bi-person-check me-1"></i>Salvar Jogadores</button>
+            </form>
+          </div>
+
+          <!-- Delete -->
+          <div class="mt-2">
+            <form method="POST" action="{{ url_for('admin_version_delete',vid=v.id) }}" onsubmit="return confirm('Deletar v{{ v.name }}? Posts da timeline são mantidos.')">
+              <button type="submit" class="btn btn-mc-danger btn-sm"><i class="bi bi-trash3 me-1"></i>Deletar Versão</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="mc-empty mc-card p-4 text-center"><span class="mc-empty-icon">📦</span><p>Nenhuma versão. Crie a primeira acima!</p></div>
+  {% endif %}
+</div>
+<script>
+function toggleEditForm(id){const el=document.getElementById('editForm-'+id);el.style.display=el.style.display==='none'?'block':'none';}
+</script>
+{% endblock %}

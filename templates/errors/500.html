@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}500 Erro — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="mc-empty py-5">
+    <div style="font-family:'Press Start 2P',monospace;font-size:4rem;color:var(--mc-red);text-shadow:3px 3px 0 #000;line-height:1.2;">500</div>
+    <h1 class="fs-4 fw-bold mt-3 mb-2 text-mc-red">Erro Interno do Servidor</h1>
+    <p class="text-mc-muted mb-4">
+      Algo explodiu como um creeper! 💥<br>
+      Tente novamente em alguns instantes.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-mc-primary">
+      <i class="bi bi-arrow-counterclockwise me-1"></i>Tentar Novamente
+    </a>
+  </div>
+</div>
+{% endblock %}

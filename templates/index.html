@@ -1,42 +1,199 @@
-{% extends "template.html" %}
-
-{% block title %}
-    Reliquia - Servidor Minecraft
-{% endblock %}
-
-{% block extra_css %} 
-    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ site.home_title or 'Reliquia' }} — Servidor Minecraft{% endblock %}
 
 {% block content %}
 
-<section class="intro">
-    <h1>Reliquia Server</h1>
-    <a href="{{ url_for('history') }}">Ver Histórias</a>
-</section>
+<!-- ── HERO ── -->
+<section class="mc-hero py-5">
+  <div class="container mc-hero-content text-center py-4">
+    <p class="mc-title text-mc-green mb-3">⚔ {{ site.server_name or 'Reliquia' }} ⚔</p>
+    <h1 class="display-5 fw-bold text-white mb-2">{{ site.home_title or 'Reliquia Server' }}</h1>
+    <p class="text-mc-muted mb-4 fs-5">{{ site.home_subtitle or 'Servidor de Minecraft multiplayer' }}</p>
 
-<section class="historico-preview">
-    <h2>Histórico por Versões</h2>
-    <p>Veja imagens e mudanças marcantes em cada fase do servidor:</p>
-    <div class="version-links">
-        <a href="{{ url_for('history') }}#versao-1">Versão 1</a>
-        <a href="{{ url_for('history') }}#versao-2">Versão 2</a>
-        <a href="{{ url_for('history') }}#versao-3">Versão 3</a>
+    {% if current_ver %}
+    <div class="d-inline-flex align-items-center gap-2 mb-4 px-3 py-2 mc-card">
+      <span class="status-dot status-dot-open"></span>
+      <span class="text-mc-muted" style="font-size:.82rem;">Versão Atual</span>
+      <span class="version-badge-post fw-bold">v{{ current_ver.name }}</span>
+      {% if current_ver.start_date %}
+      <span class="text-mc-muted" style="font-size:.75rem;">desde {{ current_ver.start_date }}</span>
+      {% endif %}
     </div>
-</section>
+    {% endif %}
 
-<section class="experiencias-preview">
-    <h2>Experiências dos Jogadores</h2>
-    <p>Relatos e momentos marcantes contados pelos próprios players.</p>
-    <a href="{{ url_for('experiences') }}" class="btn">Ver Experiências</a>
-</section>
-
-<section class="chamada-final">
-    <h2>Junte-se à Reliquia</h2>
-    <p>Entre agora e faça parte dessa jornada entre versões e eras!</p>
-    <div class="actions">
-        <a href="https://discord.gg/5tNdasxqJ8" class="btn">Entrar no Discord</a>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      {% if not current_user %}
+      <a href="{{ url_for('register') }}" class="btn btn-mc-primary px-4 py-2">
+        <i class="bi bi-person-plus-fill me-2"></i>Criar Conta
+      </a>
+      {% endif %}
+      <a href="{{ url_for('forum') }}" class="btn btn-mc-secondary px-4 py-2">
+        <i class="bi bi-collection-fill me-2"></i>Ver Fórum
+      </a>
+      <a href="{{ url_for('history') }}" class="btn btn-mc-secondary px-4 py-2">
+        <i class="bi bi-clock-history me-2"></i>História
+      </a>
+      {% if site.discord_url %}
+      <a href="{{ site.discord_url }}" class="btn btn-mc-secondary px-4 py-2" target="_blank">
+        <i class="bi bi-discord me-2"></i>Discord
+      </a>
+      {% endif %}
     </div>
+  </div>
 </section>
 
+<div class="container py-4">
+
+  <!-- ── STATS ── -->
+  <div class="row g-3 mb-5">
+    <div class="col-6 col-md-3">
+      <div class="mc-stat-card green">
+        <div class="mc-stat-num text-mc-green">{{ stats.users }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.78rem;">Jogadores</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="mc-stat-card teal">
+        <div class="mc-stat-num text-mc-teal">{{ stats.posts }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.78rem;">Posts</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="mc-stat-card gold">
+        <div class="mc-stat-num text-mc-gold">{{ stats.comments }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.78rem;">Comentários</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="mc-stat-card purple">
+        <div class="mc-stat-num text-mc-purple">{{ server_versions|length }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.78rem;">Versões</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── FEATURED ── -->
+    {% if featured %}
+    <div class="col-12">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-star-fill text-mc-gold"></i>
+        <h2 class="fs-5 mb-0 fw-bold">Posts em Destaque</h2>
+      </div>
+      <div class="row g-3">
+        {% for p in featured %}
+        <div class="col-md-4">
+          <a href="{{ url_for('forum_post', pid=p.id) }}" class="text-decoration-none">
+            <div class="mc-card p-3 h-100" style="border-top:2px solid var(--mc-gold);">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                {% if p.minecraft_nick %}
+                <img src="https://mc-heads.net/avatar/{{ p.minecraft_nick }}/28"
+                     class="mc-avatar" style="width:28px;height:28px;" alt="" onerror="this.style.display='none'">
+                {% endif %}
+                <small class="text-mc-muted">{{ p.author }}</small>
+                {% if p.version_tag %}<span class="version-badge">v{{ p.version_tag }}</span>{% endif %}
+              </div>
+              <h6 class="text-white fw-bold mb-2">{{ p.title[:60] }}{% if p.title|length > 60 %}…{% endif %}</h6>
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <small class="text-mc-muted">{{ p.created_at | fmtdate }}</small>
+                <small class="text-mc-muted"><i class="bi bi-chat me-1"></i>{{ p.comment_count }}</small>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── RECENT POSTS ── -->
+    <div class="col-lg-8">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-collection-fill text-mc-green"></i>
+          <h2 class="fs-5 mb-0 fw-bold">Posts Recentes</h2>
+        </div>
+        <a href="{{ url_for('forum') }}" class="btn btn-mc-secondary btn-sm">Ver todos →</a>
+      </div>
+      {% if recent %}
+      <div class="d-flex flex-column gap-2">
+        {% for p in recent %}
+        <div class="post-card d-flex align-items-center gap-3 p-3 {% if p.pinned %}post-pinned-bar{% endif %}">
+          <i class="bi bi-exclamation-circle-fill post-status-open post-status-icon"></i>
+          {% if p.minecraft_nick %}
+          <img src="https://mc-heads.net/avatar/{{ p.minecraft_nick }}/32"
+               class="mc-avatar" style="width:32px;height:32px;flex-shrink:0;" alt="" onerror="this.style.display='none'">
+          {% else %}
+          <i class="bi bi-person-circle text-mc-muted fs-4 flex-shrink-0"></i>
+          {% endif %}
+          <div class="flex-grow-1 min-w-0">
+            <a href="{{ url_for('forum_post', pid=p.id) }}" class="post-title-link d-block text-truncate">
+              {% if p.pinned %}<i class="bi bi-pin-fill text-mc-gold me-1"></i>{% endif %}
+              {{ p.title }}
+            </a>
+            <small class="text-mc-muted">#{{ p.id }} por {{ p.author }}
+              {% if p.version_tag %} · <span class="version-badge">v{{ p.version_tag }}</span>{% endif %}
+            </small>
+          </div>
+          <small class="text-mc-muted flex-shrink-0"><i class="bi bi-chat"></i> {{ p.comment_count }}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="mc-card p-4 text-center text-mc-muted">
+        <i class="bi bi-collection" style="font-size:2rem;"></i>
+        <p class="mt-2 mb-0">Nenhum post ainda. <a href="{{ url_for('forum_new') }}">Crie o primeiro!</a></p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── SIDEBAR ── -->
+    <div class="col-lg-4">
+      <!-- Versions -->
+      <div class="mc-card p-3 mb-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-layers-fill text-mc-teal"></i>
+          <h3 class="fs-6 mb-0 fw-bold">Versões do Servidor</h3>
+        </div>
+        {% for v in server_versions %}
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-mc">
+          <div class="d-flex align-items-center gap-2">
+            {% if v.is_current %}
+            <span class="status-dot status-dot-open"></span>
+            {% else %}
+            <span class="status-dot status-dot-archived"></span>
+            {% endif %}
+            <span class="fw-bold" style="font-size:.88rem;">v{{ v.name }}</span>
+          </div>
+          <div class="text-end">
+            {% if v.is_current %}<span class="badge" style="background:rgba(63,185,80,.15);color:var(--mc-green);font-size:.65rem;">ATUAL</span>{% endif %}
+            {% if v.start_date %}<small class="text-mc-muted d-block" style="font-size:.72rem;">{{ v.start_date }}</small>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('history') }}" class="btn btn-mc-secondary btn-sm w-100 mt-3">
+          <i class="bi bi-clock-history me-1"></i>Ver Timeline Completa
+        </a>
+      </div>
+
+      <!-- Join -->
+      <div class="mc-card p-3" style="border-top:2px solid var(--mc-green);">
+        <h3 class="fs-6 fw-bold mb-2 text-mc-green">Faça Parte da Reliquia!</h3>
+        <p class="text-mc-muted mb-3" style="font-size:.85rem;">{{ site.home_description }}</p>
+        {% if not current_user %}
+        <a href="{{ url_for('register') }}" class="btn btn-mc-primary btn-sm w-100 mb-2">
+          <i class="bi bi-person-plus-fill me-1"></i>Criar Conta
+        </a>
+        {% endif %}
+        {% if site.discord_url %}
+        <a href="{{ site.discord_url }}" class="btn btn-mc-secondary btn-sm w-100" target="_blank">
+          <i class="bi bi-discord me-1"></i>Entrar no Discord
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
 {% endblock %}

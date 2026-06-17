@@ -1,0 +1,134 @@
+{% extends "admin/base.html" %}
+{% block title %}Posts — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-collection-fill text-mc-teal fs-5"></i>
+  <h1>Gerenciar Posts</h1>
+  <small class="text-mc-muted ms-auto">{{ posts|length }} post{{ 's' if posts|length != 1 }}</small>
+</div>
+
+<div class="p-4">
+
+  <div class="mc-card p-3 mb-4" style="font-size:.83rem;background:rgba(88,200,192,.06);border-color:rgba(88,200,192,.25);">
+    <i class="bi bi-info-circle-fill text-mc-teal me-2"></i>
+    <strong>Posts em Destaque</strong> (⭐) aparecem na homepage. <strong>Posts Fixados</strong> (📌) ficam no topo do fórum.
+    <strong>Posts Recentes</strong> são automáticos — os últimos 5 abertos — e não são editáveis aqui intencionalmente.
+  </div>
+
+  <div class="mc-card overflow-hidden">
+    <div class="table-responsive">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th style="width:40px;"></th>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Tipo</th>
+            <th>Versão</th>
+            <th>Status</th>
+            <th>Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in posts %}
+          <tr>
+            <td class="text-center">
+              {% if p.status == 'open' %}
+              <i class="bi bi-exclamation-circle-fill post-status-open" title="Aberto"></i>
+              {% elif p.status == 'closed' %}
+              <i class="bi bi-check-circle-fill post-status-closed" title="Fechado"></i>
+              {% else %}
+              <i class="bi bi-archive-fill post-status-archived" title="Arquivado"></i>
+              {% endif %}
+            </td>
+            <td style="max-width:260px;">
+              <a href="{{ url_for('forum_post', pid=p.id) }}" class="post-title-link text-truncate d-block">
+                {% if p.pinned %}<i class="bi bi-pin-fill text-mc-gold me-1" title="Fixado"></i>{% endif %}
+                {% if p.featured %}<i class="bi bi-star-fill text-mc-gold me-1" title="Destaque"></i>{% endif %}
+                {{ p.title }}
+              </a>
+            </td>
+            <td>
+              <small><a href="{{ url_for('profile', username=p.author) }}" class="text-mc-teal text-decoration-none">{{ p.author }}</a></small>
+            </td>
+            <td>
+              <span class="badge" style="font-size:.65rem;border-radius:2px;
+                {% if p.post_type == 'forum' %}background:rgba(63,185,80,.12);color:var(--mc-green);
+                {% elif p.post_type == 'history' %}background:rgba(88,200,192,.12);color:var(--mc-teal);
+                {% else %}background:rgba(210,153,34,.12);color:var(--mc-gold);{% endif %}">
+                {{ p.post_type | upper }}
+              </span>
+            </td>
+            <td>
+              {% if p.version_tag %}
+              <span class="version-badge">v{{ p.version_tag }}</span>
+              {% else %}<span class="text-mc-muted">—</span>{% endif %}
+            </td>
+            <td>
+              <span class="badge" style="font-size:.65rem;border-radius:2px;
+                {% if p.status == 'open' %}background:rgba(63,185,80,.12);color:var(--mc-green);
+                {% elif p.status == 'closed' %}background:rgba(248,81,73,.12);color:var(--mc-red);
+                {% else %}background:rgba(139,148,158,.12);color:var(--mc-muted);{% endif %}">
+                {{ p.status | upper }}
+              </span>
+            </td>
+            <td><small class="text-mc-muted">{{ p.created_at | fmtdate }}</small></td>
+            <td>
+              <div class="d-flex gap-1">
+                <!-- Toggle Featured -->
+                {% if has_perm('manage_featured') %}
+                <form method="POST" action="{{ url_for('toggle_featured', pid=p.id) }}">
+                  <button type="submit" class="btn btn-sm p-1"
+                          title="{{ 'Remover Destaque' if p.featured else 'Destacar' }}"
+                          style="background:none;border:1px solid var(--mc-border);border-radius:2px;width:28px;height:28px;
+                                 color:{{ 'var(--mc-gold)' if p.featured else 'var(--mc-muted)' }};">
+                    <i class="bi bi-star{{ '-fill' if p.featured else '' }}" style="font-size:.75rem;"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+                <!-- Toggle Pinned -->
+                {% if has_perm('pin_posts') %}
+                <form method="POST" action="{{ url_for('toggle_pinned', pid=p.id) }}">
+                  <button type="submit" class="btn btn-sm p-1"
+                          title="{{ 'Desafixar' if p.pinned else 'Fixar' }}"
+                          style="background:none;border:1px solid var(--mc-border);border-radius:2px;width:28px;height:28px;
+                                 color:{{ 'var(--mc-gold)' if p.pinned else 'var(--mc-muted)' }};">
+                    <i class="bi bi-pin{{ '-angle-fill' if p.pinned else '-angle' }}" style="font-size:.75rem;"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+                <!-- View -->
+                <a href="{{ url_for('forum_post', pid=p.id) }}"
+                   class="btn btn-sm p-1 btn-mc-secondary"
+                   style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;"
+                   title="Ver post">
+                  <i class="bi bi-eye" style="font-size:.75rem;"></i>
+                </a>
+
+                <!-- Archive -->
+                {% if has_perm('archive_posts') and p.status != 'archived' %}
+                <form method="POST" action="{{ url_for('forum_status', pid=p.id) }}"
+                      onsubmit="return confirm('Arquivar este post?')">
+                  <input type="hidden" name="status" value="archived">
+                  <button type="submit" class="btn btn-sm p-1"
+                          title="Arquivar"
+                          style="background:none;border:1px solid var(--mc-border);border-radius:2px;width:28px;height:28px;color:var(--mc-muted);">
+                    <i class="bi bi-archive" style="font-size:.75rem;"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

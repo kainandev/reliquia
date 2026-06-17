@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Registrar — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="mc-card p-4" style="border-top:2px solid var(--mc-teal);">
+        <div class="text-center mb-4">
+          <span style="font-size:2.5rem;">🎮</span>
+          <h1 class="fs-4 fw-bold mt-2 mb-0">Criar Conta</h1>
+          <p class="text-mc-muted mt-1" style="font-size:.85rem;">Junte-se à comunidade Reliquia</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="mc-label">Username <span class="text-danger">*</span></label>
+              <input type="text" name="username" class="form-control mc-input"
+                     placeholder="seu_nick" minlength="3" required autofocus>
+              <small class="text-mc-muted">Mínimo 3 caracteres. Será seu nome no site.</small>
+            </div>
+            <div class="col-12">
+              <label class="mc-label">E-mail <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control mc-input"
+                     placeholder="voce@email.com" required>
+            </div>
+            <div class="col-12">
+              <label class="mc-label">Nick do Minecraft <span class="text-mc-muted">(opcional)</span></label>
+              <input type="text" name="minecraft_nick" id="mcNickInput" class="form-control mc-input"
+                     placeholder="SeuNickMC" oninput="previewSkin(this.value)">
+              <small class="text-mc-muted">Usado para exibir sua skin no site.</small>
+              <div id="skinPreview" class="mt-2 text-center" style="display:none;">
+                <img id="skinImg" src="" class="mc-avatar" style="height:80px;image-rendering:pixelated;" alt="skin preview">
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="mc-label">Senha <span class="text-danger">*</span></label>
+              <input type="password" name="password" class="form-control mc-input"
+                     placeholder="••••••••" minlength="6" required>
+              <small class="text-mc-muted">Mínimo 6 caracteres.</small>
+            </div>
+            <div class="col-12">
+              <label class="mc-label">Confirmar Senha <span class="text-danger">*</span></label>
+              <input type="password" name="confirm_password" class="form-control mc-input"
+                     placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <div class="mc-card p-3 mt-3" style="background:var(--mc-surface-2);">
+            <p class="text-mc-muted mb-2" style="font-size:.8rem;"><strong>Cargos disponíveis:</strong></p>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="mc-role mc-role-forasteiro">Forasteiro</span>
+              <span class="mc-role mc-role-jogador">Jogador</span>
+              <span class="mc-role mc-role-moderador">Moderador</span>
+              <span class="mc-role mc-role-master">Master</span>
+            </div>
+            <small class="text-mc-muted mt-2 d-block">Você inicia como <strong>Forasteiro</strong>. Cargos são elevados por admins.</small>
+          </div>
+
+          <button type="submit" class="btn btn-mc-primary w-100 py-2 mt-3">
+            <i class="bi bi-person-plus-fill me-2"></i>Criar Conta
+          </button>
+        </form>
+
+        <hr class="border-mc my-3">
+        <p class="text-center text-mc-muted mb-0" style="font-size:.85rem;">
+          Já tem conta? <a href="{{ url_for('login') }}" class="text-mc-teal text-decoration-none fw-bold">Entrar</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let skinTimer;
+function previewSkin(nick) {
+  clearTimeout(skinTimer);
+  const el = document.getElementById('skinPreview');
+  if (!nick.trim()) { el.style.display = 'none'; return; }
+  skinTimer = setTimeout(() => {
+    const img = document.getElementById('skinImg');
+    img.src = `https://mc-heads.net/body/${nick.trim()}/80`;
+    img.onload = () => el.style.display = 'block';
+    img.onerror = () => el.style.display = 'none';
+  }, 600);
+}
+</script>
+{% endblock %}

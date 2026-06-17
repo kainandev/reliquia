@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Fórum — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <!-- ── HEADER ── -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="fs-4 fw-bold mb-0"><i class="bi bi-collection-fill text-mc-green me-2"></i>Fórum da Comunidade</h1>
+      <small class="text-mc-muted">Discussões, ideias e experiências do servidor</small>
+    </div>
+    {% if has_perm('create_post') %}
+    <a href="{{ url_for('forum_new') }}" class="btn btn-mc-primary">
+      <i class="bi bi-plus-lg me-1"></i>Novo Post
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- ── FILTER BAR ── -->
+  <div class="mc-filter-bar mb-3">
+    <form method="GET" action="{{ url_for('forum') }}" class="d-flex flex-wrap gap-2 align-items-center">
+      <!-- Search -->
+      <div class="flex-grow-1" style="min-width:180px;">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-mc-surface-2 border-mc text-mc-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" name="q" class="form-control mc-input" placeholder="Buscar posts…" value="{{ search }}">
+        </div>
+      </div>
+
+      <!-- Status filter -->
+      <div class="d-flex gap-1">
+        <a href="{{ url_for('forum', status='open', version=ver_f, q=search) }}"
+           class="btn btn-sm {% if status == 'open' %}btn-mc-primary{% else %}btn-mc-secondary{% endif %}">
+          <i class="bi bi-exclamation-circle-fill me-1"></i>Abertos
+        </a>
+        <a href="{{ url_for('forum', status='closed', version=ver_f, q=search) }}"
+           class="btn btn-sm {% if status == 'closed' %}btn-mc-danger{% else %}btn-mc-secondary{% endif %}">
+          <i class="bi bi-check-circle-fill me-1"></i>Fechados
+        </a>
+        <a href="{{ url_for('forum', status='archived', version=ver_f, q=search) }}"
+           class="btn btn-sm {% if status == 'archived' %}btn-mc-secondary{% else %}btn-mc-secondary{% endif %}" style="{% if status == 'archived' %}opacity:1{% endif %}">
+          <i class="bi bi-archive-fill me-1"></i>Arquivados
+        </a>
+      </div>
+
+      <!-- Version filter -->
+      <select name="version" class="form-select form-select-sm mc-input" style="width:auto;"
+              onchange="this.form.submit()">
+        <option value="">Todas as versões</option>
+        {% for v in versions %}
+        <option value="{{ v.name }}" {% if ver_f == v.name %}selected{% endif %}>v{{ v.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-mc-secondary btn-sm">
+        <i class="bi bi-funnel-fill"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- ── POST LIST ── -->
+  {% if posts %}
+  <div class="mc-card overflow-hidden">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2"
+         style="background:var(--mc-surface-2);border-bottom:1px solid var(--mc-border);">
+      <small class="text-mc-muted fw-bold">
+        <i class="bi bi-exclamation-circle-fill text-mc-green me-1"></i>
+        {{ total }} post{{ 's' if total != 1 }}
+        {% if search %} — busca: "<em>{{ search }}</em>"{% endif %}
+        {% if ver_f %} — v{{ ver_f }}{% endif %}
+      </small>
+      <small class="text-mc-muted">Mais recentes primeiro</small>
+    </div>
+
+    {% for p in posts %}
+    <div class="post-card d-flex align-items-start gap-3 p-3 {% if p.pinned %}post-pinned-bar{% endif %} {% if not loop.last %}border-bottom border-mc{% endif %}">
+
+      <!-- Status icon -->
+      <div class="post-status-icon mt-1 flex-shrink-0">
+        {% if p.status == 'open' %}
+          <i class="bi bi-exclamation-circle-fill fs-5 post-status-open" title="Aberto"></i>
+        {% elif p.status == 'closed' %}
+          <i class="bi bi-check-circle-fill fs-5 post-status-closed" title="Fechado"></i>
+        {% else %}
+          <i class="bi bi-archive-fill fs-5 post-status-archived" title="Arquivado"></i>
+        {% endif %}
+      </div>
+
+      <!-- Avatar -->
+      <div class="flex-shrink-0">
+        {% if p.minecraft_nick %}
+        <a href="{{ url_for('profile', username=p.author) }}">
+          <img src="https://mc-heads.net/avatar/{{ p.minecraft_nick }}/36"
+               class="mc-avatar" style="width:36px;height:36px;border-radius:2px;"
+               alt="{{ p.author }}" onerror="this.style.display='none'">
+        </a>
+        {% else %}
+        <a href="{{ url_for('profile', username=p.author) }}">
+          <div class="bg-mc-surface-2 d-flex align-items-center justify-content-center"
+               style="width:36px;height:36px;border-radius:2px;border:1px solid var(--mc-border);">
+            <i class="bi bi-person-fill text-mc-muted"></i>
+          </div>
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Content -->
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+          {% if p.pinned %}
+          <i class="bi bi-pin-angle-fill text-mc-gold" title="Fixado"></i>
+          {% endif %}
+          {% if p.featured %}
+          <i class="bi bi-star-fill text-mc-gold" title="Destaque" style="font-size:.8rem;"></i>
+          {% endif %}
+          <a href="{{ url_for('forum_post', pid=p.id) }}" class="post-title-link">
+            {{ p.title }}
+          </a>
+          {% if p.version_tag %}
+          <span class="version-badge">v{{ p.version_tag }}</span>
+          {% endif %}
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <small class="text-mc-muted">
+            <span class="text-mc-muted fw-bold" style="font-size:.75rem;">#{{ p.id }}</span>
+            aberto por
+            <a href="{{ url_for('profile', username=p.author) }}" class="text-mc-teal text-decoration-none fw-bold">
+              {{ p.author }}
+            </a>
+            em {{ p.created_at | fmtdate }}
+          </small>
+        </div>
+        <!-- Reactions preview -->
+        {% set reacts = [] %}
+        {% for emoji, label in reaction_emojis.values() %}{% endfor %}
+      </div>
+
+      <!-- Comment count -->
+      <div class="flex-shrink-0 text-center">
+        <a href="{{ url_for('forum_post', pid=p.id) }}#comments" class="text-mc-muted text-decoration-none">
+          <div style="font-size:.78rem;"><i class="bi bi-chat-fill"></i> {{ p.comment_count }}</div>
+        </a>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── PAGINATION ── -->
+  {% set total_pages = ((total - 1) // per_page + 1) if total > 0 else 1 %}
+  {% if total_pages > 1 %}
+  <nav class="mt-4">
+    <ul class="pagination mc-pagination justify-content-center">
+      <li class="page-item {% if page == 1 %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('forum', page=page-1, status=status, version=ver_f, q=search) }}">
+          ← Anterior
+        </a>
+      </li>
+      {% for pg in range(1, total_pages+1) %}
+        {% if pg == page or pg == 1 or pg == total_pages or (pg >= page-1 and pg <= page+1) %}
+        <li class="page-item {% if pg == page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('forum', page=pg, status=status, version=ver_f, q=search) }}">{{ pg }}</a>
+        </li>
+        {% elif pg == page-2 or pg == page+2 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('forum', page=page+1, status=status, version=ver_f, q=search) }}">
+          Próxima →
+        </a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="mc-empty mc-card p-5">
+    <span class="mc-empty-icon">📭</span>
+    <h3 class="fs-5 mb-2">Nenhum post encontrado</h3>
+    <p class="text-mc-muted mb-3">
+      {% if search %}Nenhum resultado para "<strong>{{ search }}</strong>".
+      {% elif ver_f %}Nenhum post para a versão v{{ ver_f }}.
+      {% else %}Seja o primeiro a postar!{% endif %}
+    </p>
+    {% if has_perm('create_post') %}
+    <a href="{{ url_for('forum_new') }}" class="btn btn-mc-primary">
+      <i class="bi bi-plus-lg me-1"></i>Criar Post
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

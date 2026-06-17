@@ -1,0 +1,148 @@
+{% extends "admin/base.html" %}
+{% block title %}Permissões — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-key-fill text-mc-gold fs-5"></i>
+  <h1>Gerenciar Permissões por Cargo</h1>
+</div>
+
+<div class="p-4">
+
+  <div class="mc-card p-3 mb-4" style="background:rgba(210,153,34,.07);border-color:rgba(210,153,34,.3);">
+    <p class="mb-0" style="font-size:.85rem;">
+      <i class="bi bi-exclamation-triangle-fill text-mc-gold me-2"></i>
+      <strong>Apenas Masters</strong> podem alterar permissões. Mudanças têm efeito imediato para todos os usuários daquele cargo.
+      As permissões são cumulativas — cada cargo herda as permissões dos cargos inferiores por convenção.
+    </p>
+  </div>
+
+  <!-- Cargo hierarchy legend -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    {% for role in roles %}
+    <div class="d-flex align-items-center gap-2 px-3 py-2 mc-card">
+      <span class="mc-role mc-role-{{ role|lower }}">{{ role }}</span>
+      <small class="text-mc-muted">
+        {% if role == 'Forasteiro' %}→ menor acesso{% endif %}
+        {% if role == 'Jogador' %}→ pode publicar{% endif %}
+        {% if role == 'Moderador' %}→ pode moderar{% endif %}
+        {% if role == 'Master' %}→ acesso total{% endif %}
+      </small>
+    </div>
+    {% endfor %}
+    <small class="text-mc-muted align-self-center ms-2">
+      <i class="bi bi-arrow-right me-1"></i>Permissão cresce da esquerda para a direita
+    </small>
+  </div>
+
+  <!-- Permission tabs per role -->
+  <ul class="nav nav-tabs mb-0" id="permTabs" style="border-bottom:1px solid var(--mc-border);">
+    {% for role in roles %}
+    <li class="nav-item">
+      <button class="nav-link {% if loop.first %}active{% endif %}"
+              data-bs-toggle="tab" data-bs-target="#tab-{{ role|lower }}"
+              style="border-radius:2px 2px 0 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;">
+        <span class="mc-role mc-role-{{ role|lower }} me-1">{{ role }}</span>
+      </button>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="tab-content">
+    {% for role in roles %}
+    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="tab-{{ role|lower }}">
+      <div class="mc-card p-4" style="border-top:none;border-radius:0 0 3px 3px;">
+        <form method="POST" action="{{ url_for('admin_permissions') }}">
+          <input type="hidden" name="role_name" value="{{ role }}">
+
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="fs-5 fw-bold mb-0">
+              Permissões do cargo <span class="mc-role mc-role-{{ role|lower }}">{{ role }}</span>
+            </h2>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-mc-secondary btn-sm"
+                      onclick="toggleAll('{{ role|lower }}', true)">
+                <i class="bi bi-check-all me-1"></i>Marcar tudo
+              </button>
+              <button type="button" class="btn btn-mc-secondary btn-sm"
+                      onclick="toggleAll('{{ role|lower }}', false)">
+                <i class="bi bi-x-lg me-1"></i>Desmarcar tudo
+              </button>
+            </div>
+          </div>
+
+          <div class="perm-grid mb-4" id="grid-{{ role|lower }}">
+            {% for perm_key, perm_label in permission_labels.items() %}
+            <label class="perm-check-item">
+              <input type="checkbox"
+                     name="{{ perm_key }}"
+                     class="perm-cb-{{ role|lower }}"
+                     {% if roles_perms[role].get(perm_key) %}checked{% endif %}
+                     {% if role == 'Master' and perm_key == 'full_admin' %}disabled checked{% endif %}>
+              <span>{{ perm_label }}</span>
+              {% if perm_key == 'full_admin' %}
+              <span class="badge ms-auto" style="background:rgba(210,153,34,.2);color:var(--mc-gold);font-size:.6rem;border-radius:2px;">MASTER</span>
+              {% endif %}
+            </label>
+            {% endfor %}
+          </div>
+
+          <!-- Hidden full_admin for Master always true -->
+          {% if role == 'Master' %}
+          <input type="hidden" name="full_admin" value="on">
+          {% endif %}
+
+          <button type="submit" class="btn btn-mc-primary">
+            <i class="bi bi-check-lg me-1"></i>Salvar Permissões de {{ role }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Reference table -->
+  <div class="mc-card p-4 mt-4">
+    <h3 class="fs-6 fw-bold mb-3 text-mc-muted">
+      <i class="bi bi-table me-1"></i>Tabela de Referência — Permissões por Cargo
+    </h3>
+    <div class="table-responsive">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>Permissão</th>
+            {% for role in roles %}
+            <th class="text-center"><span class="mc-role mc-role-{{ role|lower }}">{{ role }}</span></th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for perm_key, perm_label in permission_labels.items() %}
+          <tr>
+            <td style="font-size:.82rem;">{{ perm_label }}</td>
+            {% for role in roles %}
+            <td class="text-center">
+              {% if roles_perms[role].get(perm_key) or (role == 'Master') %}
+              <i class="bi bi-check-circle-fill text-mc-green"></i>
+              {% else %}
+              <i class="bi bi-x-circle text-mc-muted" style="opacity:.4;"></i>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleAll(role, state) {
+  document.querySelectorAll('.perm-cb-' + role).forEach(cb => {
+    if (!cb.disabled) cb.checked = state;
+  });
+}
+</script>
+{% endblock %}

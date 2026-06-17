@@ -1,0 +1,119 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard Admin — {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-speedometer2 text-mc-gold fs-5"></i>
+  <h1>Dashboard</h1>
+  <small class="text-mc-muted ms-auto">{{ now.strftime('%d/%m/%Y às %H:%M') }}</small>
+</div>
+
+<div class="p-4">
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="mc-stat-card green">
+        <div class="mc-stat-num text-mc-green">{{ stats.users }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.75rem;"><i class="bi bi-people-fill me-1"></i>Usuários</div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="mc-stat-card teal">
+        <div class="mc-stat-num text-mc-teal">{{ stats.posts }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.75rem;"><i class="bi bi-collection-fill me-1"></i>Posts</div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="mc-stat-card gold">
+        <div class="mc-stat-num text-mc-gold">{{ stats.comments }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.75rem;"><i class="bi bi-chat-fill me-1"></i>Comentários</div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="mc-stat-card purple">
+        <div class="mc-stat-num {% if stats.banned > 0 %}text-mc-red{% else %}text-mc-muted{% endif %}">{{ stats.banned }}</div>
+        <div class="text-mc-muted mt-1" style="font-size:.75rem;"><i class="bi bi-slash-circle me-1"></i>Banidos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent Users -->
+    <div class="col-lg-6">
+      <div class="mc-card overflow-hidden">
+        <div class="px-3 py-2 d-flex justify-content-between align-items-center"
+             style="background:var(--mc-surface-2);border-bottom:1px solid var(--mc-border);">
+          <span class="fw-bold" style="font-size:.88rem;"><i class="bi bi-person-plus-fill text-mc-green me-2"></i>Novos Usuários</span>
+          <a href="{{ url_for('admin_users') }}" class="btn btn-mc-secondary btn-sm" style="font-size:.75rem;">Ver todos</a>
+        </div>
+        <div>
+          {% for u in recent_users %}
+          <div class="d-flex align-items-center gap-3 p-3 {% if not loop.last %}border-bottom border-mc{% endif %}">
+            {% if u.minecraft_nick %}
+            <img src="https://mc-heads.net/avatar/{{ u.minecraft_nick }}/32"
+                 class="mc-avatar" style="width:32px;height:32px;" alt="" onerror="this.style.display='none'">
+            {% else %}
+            <i class="bi bi-person-circle text-mc-muted fs-4"></i>
+            {% endif %}
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('profile', username=u.username) }}" class="text-mc-teal text-decoration-none fw-bold" style="font-size:.88rem;">{{ u.username }}</a>
+                <span class="mc-role mc-role-{{ u.role|lower }}">{{ u.role }}</span>
+                {% if u.banned %}<span class="badge bg-danger" style="font-size:.6rem;border-radius:2px;">BANIDO</span>{% endif %}
+              </div>
+              <small class="text-mc-muted">{{ u.created_at | fmtdate }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="col-lg-6">
+      <div class="mc-card overflow-hidden">
+        <div class="px-3 py-2 d-flex justify-content-between align-items-center"
+             style="background:var(--mc-surface-2);border-bottom:1px solid var(--mc-border);">
+          <span class="fw-bold" style="font-size:.88rem;"><i class="bi bi-collection-fill text-mc-teal me-2"></i>Posts Recentes</span>
+          <a href="{{ url_for('admin_posts') }}" class="btn btn-mc-secondary btn-sm" style="font-size:.75rem;">Ver todos</a>
+        </div>
+        <div>
+          {% for p in recent_posts %}
+          <div class="d-flex align-items-center gap-3 p-3 {% if not loop.last %}border-bottom border-mc{% endif %}">
+            <i class="bi bi-{% if p.status == 'open' %}exclamation-circle-fill post-status-open{% elif p.status == 'closed' %}check-circle-fill post-status-closed{% else %}archive-fill post-status-archived{% endif %}"></i>
+            <div class="flex-grow-1 min-w-0">
+              <a href="{{ url_for('forum_post', pid=p.id) }}" class="post-title-link text-truncate d-block" style="font-size:.88rem;">{{ p.title }}</a>
+              <small class="text-mc-muted">por {{ p.author }} · {{ p.created_at | fmtdate }}</small>
+            </div>
+            {% if p.pinned %}<i class="bi bi-pin-fill text-mc-gold flex-shrink-0" title="Fixado"></i>{% endif %}
+            {% if p.featured %}<i class="bi bi-star-fill text-mc-gold flex-shrink-0" title="Destaque"></i>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="row g-3 mt-2">
+    <div class="col-12">
+      <div class="mc-card p-3">
+        <h3 class="fs-6 fw-bold mb-3 text-mc-muted"><i class="bi bi-lightning-fill me-1 text-mc-gold"></i>Ações Rápidas</h3>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ url_for('forum_new') }}" class="btn btn-mc-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Novo Post</a>
+          <a href="{{ url_for('history_new') }}" class="btn btn-mc-secondary btn-sm"><i class="bi bi-calendar-plus me-1"></i>Evento Timeline</a>
+          {% if has_perm('manage_versions') %}
+          <a href="{{ url_for('admin_versions') }}" class="btn btn-mc-secondary btn-sm"><i class="bi bi-layers-fill me-1"></i>Gerenciar Versões</a>
+          {% endif %}
+          {% if has_perm('manage_settings') %}
+          <a href="{{ url_for('admin_settings') }}" class="btn btn-mc-secondary btn-sm"><i class="bi bi-gear-fill me-1"></i>Configurações</a>
+          {% endif %}
+          <a href="{{ url_for('forum') }}" class="btn btn-mc-secondary btn-sm"><i class="bi bi-eye me-1"></i>Ver Fórum</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

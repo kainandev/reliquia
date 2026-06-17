@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-wrap" style="min-height:calc(100vh - 120px);">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="admin-sidebar d-none d-lg-block">
+    <div class="px-3 mb-3">
+      <small class="text-mc-muted fw-bold" style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;">
+        <i class="bi bi-shield-shaded me-1 text-mc-gold"></i>Painel Admin
+      </small>
+    </div>
+
+    <nav class="d-flex flex-column">
+      <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+         href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+      <a class="nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}"
+         href="{{ url_for('admin_users') }}">
+        <i class="bi bi-people-fill"></i> Usuários
+      </a>
+      <a class="nav-link {% if request.endpoint == 'admin_posts' %}active{% endif %}"
+         href="{{ url_for('admin_posts') }}">
+        <i class="bi bi-collection-fill"></i> Posts
+      </a>
+      {% if has_perm('manage_versions') %}
+      <a class="nav-link {% if request.endpoint == 'admin_versions' %}active{% endif %}"
+         href="{{ url_for('admin_versions') }}">
+        <i class="bi bi-layers-fill"></i> Versões
+      </a>
+      {% endif %}
+      {% if has_perm('manage_settings') %}
+      <a class="nav-link {% if request.endpoint == 'admin_settings' %}active{% endif %}"
+         href="{{ url_for('admin_settings') }}">
+        <i class="bi bi-gear-fill"></i> Configurações
+      </a>
+      {% endif %}
+      {% if has_perm('full_admin') %}
+      <a class="nav-link {% if request.endpoint == 'admin_permissions' %}active{% endif %}"
+         href="{{ url_for('admin_permissions') }}">
+        <i class="bi bi-key-fill"></i> Permissões
+      </a>
+      <a class="nav-link {% if request.endpoint == 'admin_achievements' %}active{% endif %}"
+         href="{{ url_for('admin_achievements') }}">
+        <i class="bi bi-trophy-fill"></i> Conquistas
+      </a>
+      {% endif %}
+
+      <div class="border-top border-mc mt-3 pt-3 mx-3">
+        <a class="nav-link text-mc-muted" href="{{ url_for('index') }}">
+          <i class="bi bi-house-fill"></i> Ver Site
+        </a>
+        <a class="nav-link text-mc-muted" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right text-danger"></i> Sair
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ── MOBILE NAV ── -->
+  <div class="d-lg-none bg-mc-surface border-bottom border-mc px-3 py-2 w-100">
+    <div class="d-flex gap-1 flex-wrap">
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2"></i></a>
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_users') }}"><i class="bi bi-people-fill"></i></a>
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_posts') }}"><i class="bi bi-collection-fill"></i></a>
+      {% if has_perm('manage_versions') %}
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_versions') }}"><i class="bi bi-layers-fill"></i></a>
+      {% endif %}
+      {% if has_perm('manage_settings') %}
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_settings') }}"><i class="bi bi-gear-fill"></i></a>
+      {% endif %}
+      {% if has_perm('full_admin') %}
+      <a class="btn btn-mc-secondary btn-sm" href="{{ url_for('admin_permissions') }}"><i class="bi bi-key-fill"></i></a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── CONTENT ── -->
+  <div class="admin-content">
+    {% block admin_content %}{% endblock %}
+  </div>
+
+</div>
+{% endblock %}

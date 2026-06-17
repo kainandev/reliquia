@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Login — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <div class="mc-card p-4" style="border-top:2px solid var(--mc-green);">
+        <div class="text-center mb-4">
+          <span style="font-size:2.5rem;">⚔️</span>
+          <h1 class="fs-4 fw-bold mt-2 mb-0">Entrar no Servidor</h1>
+          <p class="text-mc-muted mt-1" style="font-size:.85rem;">Acesse sua conta da Reliquia</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="mc-label">Usuário ou E-mail</label>
+            <input type="text" name="username" class="form-control mc-input"
+                   placeholder="seu_nick" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="mc-label">Senha</label>
+            <div class="position-relative">
+              <input type="password" name="password" id="pwdInput" class="form-control mc-input"
+                     placeholder="••••••••" required>
+              <button type="button" class="btn p-0 position-absolute top-50 translate-middle-y end-0 pe-3"
+                      onclick="togglePwd()" style="background:none;border:none;color:var(--mc-muted);">
+                <i class="bi bi-eye" id="pwdEyeIcon"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-mc-primary w-100 py-2 mt-1">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+          </button>
+        </form>
+
+        <hr class="border-mc my-3">
+        <p class="text-center text-mc-muted mb-0" style="font-size:.85rem;">
+          Não tem conta?
+          <a href="{{ url_for('register') }}" class="text-mc-teal text-decoration-none fw-bold">Registrar</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function togglePwd() {
+  const i = document.getElementById('pwdInput');
+  const icon = document.getElementById('pwdEyeIcon');
+  if (i.type === 'password') { i.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+  else { i.type = 'password'; icon.className = 'bi bi-eye'; }
+}
+</script>
+{% endblock %}

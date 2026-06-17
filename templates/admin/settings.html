@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% block title %}Configurações — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-gear-fill text-mc-gold fs-5"></i>
+  <h1>Configurações do Site</h1>
+</div>
+
+<div class="p-4">
+<form method="POST" action="{{ url_for('admin_settings') }}">
+
+  <!-- ── General ── -->
+  <div class="mc-card p-4 mb-4" style="border-top:2px solid var(--mc-green);">
+    <h2 class="fs-5 fw-bold mb-3"><i class="bi bi-globe me-2 text-mc-green"></i>Informações Gerais</h2>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="mc-label">Nome do Servidor</label>
+        <input type="text" name="server_name" class="form-control mc-input" value="{{ settings.server_name }}">
+      </div>
+      <div class="col-md-6">
+        <label class="mc-label">Link do Discord</label>
+        <input type="text" name="discord_url" class="form-control mc-input" value="{{ settings.discord_url }}"
+               placeholder="https://discord.gg/…">
+      </div>
+      <div class="col-md-8">
+        <label class="mc-label">IP do Servidor</label>
+        <input type="text" name="server_ip" class="form-control mc-input" value="{{ settings.server_ip }}"
+               placeholder="play.seuservidor.net">
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check form-switch mb-1">
+          <input class="form-check-input" type="checkbox" name="server_ip_visible" id="ipVisible"
+                 {% if settings.server_ip_visible == '1' %}checked{% endif %}>
+          <label class="form-check-label mc-label" for="ipVisible">Exibir IP no site</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="maintenance_mode" id="maintenanceMode"
+                 {% if settings.maintenance_mode == '1' %}checked{% endif %}>
+          <label class="form-check-label mc-label" for="maintenanceMode">
+            <span class="text-mc-red fw-bold">⚠️ Modo Manutenção</span>
+            <small class="text-mc-muted ms-2">(exibe aviso para visitantes)</small>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Homepage ── -->
+  <div class="mc-card p-4 mb-4" style="border-top:2px solid var(--mc-teal);">
+    <h2 class="fs-5 fw-bold mb-3"><i class="bi bi-house-fill me-2 text-mc-teal"></i>Página Inicial</h2>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="mc-label">Título Principal</label>
+        <input type="text" name="home_title" class="form-control mc-input" value="{{ settings.home_title }}"
+               placeholder="Reliquia Server">
+      </div>
+      <div class="col-12">
+        <label class="mc-label">Subtítulo</label>
+        <input type="text" name="home_subtitle" class="form-control mc-input" value="{{ settings.home_subtitle }}"
+               placeholder="Servidor de Minecraft multiplayer">
+      </div>
+      <div class="col-12">
+        <label class="mc-label">Descrição / Chamada para Ação</label>
+        <textarea name="home_description" class="form-control mc-input" rows="3">{{ settings.home_description }}</textarea>
+        <small class="text-mc-muted">Texto exibido no card lateral "Faça Parte da Reliquia".</small>
+      </div>
+    </div>
+    <div class="mc-card p-2 mt-3" style="background:var(--mc-surface-2);">
+      <small class="text-mc-muted"><i class="bi bi-info-circle me-1"></i>
+        <strong>Posts em Destaque</strong> são gerenciados na aba <a href="{{ url_for('admin_posts') }}" class="text-mc-teal">Posts</a>, via botão ⭐ Destacar.
+        <strong>Posts Recentes</strong> são automáticos (sem edição manual, para manter relevância).
+      </small>
+    </div>
+  </div>
+
+  <!-- ── Cloudflare R2 ── -->
+  <div class="mc-card p-4 mb-4" style="border-top:2px solid var(--mc-purple);">
+    <h2 class="fs-5 fw-bold mb-1"><i class="bi bi-cloud-fill me-2 text-mc-purple"></i>Cloudflare R2 — Upload de Imagens</h2>
+    <p class="text-mc-muted mb-3" style="font-size:.85rem;">
+      Configure o bucket R2 para armazenar imagens de posts. Se não configurado, as imagens ficam salvas em <code class="mc-code">/static/uploads/</code> localmente.
+    </p>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="mc-label">Endpoint R2</label>
+        <input type="text" name="r2_endpoint" class="form-control mc-input" value="{{ settings.r2_endpoint }}"
+               placeholder="https://<account-id>.r2.cloudflarestorage.com">
+      </div>
+      <div class="col-md-6">
+        <label class="mc-label">Access Key ID</label>
+        <input type="text" name="r2_access_key" class="form-control mc-input" value="{{ settings.r2_access_key }}"
+               placeholder="••••••••••••••••••••">
+      </div>
+      <div class="col-md-6">
+        <label class="mc-label">Secret Access Key</label>
+        <input type="password" name="r2_secret_key" class="form-control mc-input" value="{{ settings.r2_secret_key }}"
+               placeholder="••••••••••••••••••••••••••••••••••••••••">
+      </div>
+      <div class="col-md-6">
+        <label class="mc-label">Nome do Bucket</label>
+        <input type="text" name="r2_bucket" class="form-control mc-input" value="{{ settings.r2_bucket }}"
+               placeholder="reliquia-media">
+      </div>
+      <div class="col-md-6">
+        <label class="mc-label">URL Pública do Bucket</label>
+        <input type="text" name="r2_public_url" class="form-control mc-input" value="{{ settings.r2_public_url }}"
+               placeholder="https://media.seudominio.com">
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-mc-primary px-4">
+      <i class="bi bi-check-lg me-2"></i>Salvar Configurações
+    </button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-mc-secondary">Cancelar</a>
+  </div>
+
+</form>
+</div>
+{% endblock %}

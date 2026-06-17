@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — História — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:860px;">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3" style="font-size:.82rem;">
+    <a href="{{ url_for('history') }}" class="text-mc-muted text-decoration-none">
+      <i class="bi bi-clock-history me-1"></i>História
+    </a>
+    <span class="text-mc-muted mx-2">/</span>
+    <span class="text-mc-muted">{{ post.title[:40] }}{% if post.title|length > 40 %}…{% endif %}</span>
+  </nav>
+
+  <div class="mc-card overflow-hidden mb-4" style="{% if post.is_version_milestone %}border-top:2px solid var(--mc-gold);{% else %}border-top:2px solid var(--mc-teal);{% endif %}">
+
+    <!-- Header -->
+    <div class="p-4" style="background:{% if post.is_version_milestone %}linear-gradient(135deg,#2a1e07 0%,var(--mc-surface) 100%){% else %}var(--mc-surface-2){% endif %};border-bottom:1px solid var(--mc-border);">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        {% if post.is_version_milestone %}
+        <span style="font-size:1.3rem;">🏆</span>
+        <span class="mc-title text-mc-gold" style="font-size:.55rem;">Marco Principal</span>
+        {% endif %}
+        {% if post.version_name %}<span class="version-badge-post" style="{% if post.is_version_milestone %}border-color:var(--mc-gold);color:var(--mc-gold);background:rgba(210,153,34,.1);{% endif %}">v{{ post.version_name }}</span>{% endif %}
+        <span class="timeline-date-badge ms-auto">
+          <i class="bi bi-calendar-event me-1"></i>{{ post.event_date or post.created_at|fmtdate }}
+        </span>
+        {% if current_user and (current_user.id == post.author_id or has_perm('full_admin')) %}
+        <a href="{{ url_for('history_edit', hid=post.id) }}" class="btn btn-mc-secondary btn-sm">
+          <i class="bi bi-pencil-fill me-1"></i>Editar
+        </a>
+        {% endif %}
+      </div>
+      <h1 class="fs-4 fw-bold mb-2 {% if post.is_version_milestone %}text-mc-gold{% endif %}">{{ post.title }}</h1>
+      <div class="d-flex align-items-center gap-2 text-mc-muted" style="font-size:.82rem;">
+        {% if post.minecraft_nick %}
+        <img src="https://mc-heads.net/avatar/{{ post.minecraft_nick }}/20"
+             class="mc-avatar" style="width:20px;height:20px;" alt="" onerror="this.style.display='none'">
+        {% endif %}
+        <span>por <a href="{{ url_for('profile', username=post.author) }}" class="text-decoration-none {% if post.is_version_milestone %}text-mc-gold{% else %}text-mc-teal{% endif %}">{{ post.author }}</a></span>
+        <span class="mc-role mc-role-{{ post.author_role|lower }}">{{ post.author_role }}</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-4">
+      <div class="md-content">{{ post.content | md | safe }}</div>
+
+      {% if post.parsed_images %}
+      <div class="post-images-grid mt-4">
+        {% for img in post.parsed_images %}
+        <img src="{{ img }}" loading="lazy" onclick="openLightbox('{{ img }}')"
+             style="height:160px;object-fit:cover;border-radius:3px;border:1px solid var(--mc-border);cursor:pointer;">
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Reactions -->
+    <div class="px-4 pb-4 pt-2 border-top border-mc">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-mc-muted" style="font-size:.78rem;letter-spacing:.03em;">REAGIR</span>
+        {% for key,(emoji,label) in reaction_emojis.items() %}
+        <button class="reaction-btn {% if key in user_reacs %}reacted{% endif %}"
+                onclick="reactEntry('{{ key }}', this)" title="{{ label }}"
+                {% if not current_user %}disabled{% endif %}>
+          <span>{{ emoji }}</span>
+          <span class="reaction-count">{% if reactions.get(key,0) %}{{ reactions[key] }}{% endif %}</span>
+        </button>
+        {% endfor %}
+        {% if not current_user %}
+        <small class="text-mc-muted ms-1">
+          <a href="{{ url_for('login') }}" class="text-mc-teal text-decoration-none">Login</a> para reagir
+        </small>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <a href="{{ url_for('history') }}" class="btn btn-mc-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar para a Timeline
+  </a>
+</div>
+
+<script>
+const ENTRY_ID = {{ post.id }};
+function reactEntry(key, btn) {
+  fetch(`/history/${ENTRY_ID}/react`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({reaction: key})
+  }).then(r => r.json()).then(data => {
+    if (data.error) { showToast(data.error, 'danger'); return; }
+    btn.classList.toggle('reacted', data.added);
+    btn.querySelector('.reaction-count').textContent = data.count > 0 ? data.count : '';
+  });
+}
+</script>
+{% endblock %}

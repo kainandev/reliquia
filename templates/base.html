@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ site.server_name or 'Reliquia' }} — Servidor Minecraft{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/minecraft.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="mc-navbar navbar navbar-expand-lg sticky-top">
+  <div class="container-fluid px-3">
+
+    <a class="mc-brand navbar-brand" href="{{ url_for('index') }}">
+      <span class="brand-block">⚔️</span>
+      <span>{{ site.server_name or 'Reliquia' }}</span>
+    </a>
+
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav me-auto gap-1 mt-2 mt-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}" href="{{ url_for('index') }}">
+            <i class="bi bi-house-fill me-1"></i>Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'forum' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('forum') }}">
+            <i class="bi bi-collection-fill me-1"></i>Fórum
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'history' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('history') }}">
+            <i class="bi bi-clock-history me-1"></i>História
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'players' %}active{% endif %}" href="{{ url_for('players') }}">
+            <i class="bi bi-people-fill me-1"></i>Jogadores
+          </a>
+        </li>
+      </ul>
+
+      {% if site.server_ip and site.server_ip_visible == '1' %}
+      <div class="mc-server-ip me-3 my-2 my-lg-0">
+        <code>{{ site.server_ip }}</code>
+        <button class="mc-copy-btn" onclick="copyIP(this)" title="Copiar IP">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>
+      {% endif %}
+
+      <ul class="navbar-nav gap-1 mt-2 mt-lg-0">
+        {% if current_user %}
+          {% if has_perm('view_admin') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+              <i class="bi bi-shield-shaded me-1 text-mc-gold"></i>Admin
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+              {% if current_user.minecraft_nick %}
+              <img src="https://mc-heads.net/avatar/{{ current_user.minecraft_nick }}/24"
+                   class="mc-avatar mc-avatar-sm" alt="avatar"
+                   onerror="this.style.display='none'">
+              {% else %}
+              <i class="bi bi-person-circle"></i>
+              {% endif %}
+              <span>{{ current_user.username }}</span>
+              <span class="mc-role mc-role-{{ current_user.role|lower }}">{{ current_user.role }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end mc-dropdown">
+              <li>
+                <a class="dropdown-item" href="{{ url_for('profile', username=current_user.username) }}">
+                  <i class="bi bi-person-fill me-2"></i>Meu Perfil
+                </a>
+              </li>
+              {% if has_perm('create_post') %}
+              <li>
+                <a class="dropdown-item" href="{{ url_for('forum_new') }}">
+                  <i class="bi bi-plus-circle-fill me-2 text-mc-green"></i>Novo Post
+                </a>
+              </li>
+              {% endif %}
+              {% if has_perm('post_timeline') %}
+              <li>
+                <a class="dropdown-item" href="{{ url_for('history_new') }}">
+                  <i class="bi bi-calendar-plus me-2 text-mc-teal"></i>Evento na Timeline
+                </a>
+              </li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                  <i class="bi bi-box-arrow-right me-2"></i>Sair
+                </a>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-mc-primary btn-sm px-3 ms-1 my-1 my-lg-0" href="{{ url_for('register') }}">
+              <i class="bi bi-person-plus-fill me-1"></i>Registrar
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── FLASH MESSAGES ── -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container-fluid px-3 pt-3">
+  {% for cat, msg in messages %}
+  <div class="alert mc-alert alert-{{ 'danger' if cat == 'error' else cat }} alert-dismissible fade show" role="alert">
+    {% if cat == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>
+    {% elif cat == 'danger' %}<i class="bi bi-x-circle-fill me-2"></i>
+    {% elif cat == 'warning' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {% else %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ── MAIN ── -->
+<main>{% block content %}{% endblock %}</main>
+
+<!-- ── FOOTER ── -->
+<footer class="mc-footer mt-auto">
+  <div class="container text-center">
+    <div class="mc-footer-brand mb-2">⚔️ {{ site.server_name or 'Reliquia' }}</div>
+    <div class="d-flex justify-content-center gap-2 mb-2">
+      {% if site.discord_url %}
+      <a href="{{ site.discord_url }}" class="btn btn-mc-secondary btn-sm" target="_blank">
+        <i class="bi bi-discord me-1"></i>Discord
+      </a>
+      {% endif %}
+      <a href="{{ url_for('forum') }}" class="btn btn-mc-secondary btn-sm">
+        <i class="bi bi-collection me-1"></i>Fórum
+      </a>
+      <a href="{{ url_for('history') }}" class="btn btn-mc-secondary btn-sm">
+        <i class="bi bi-clock-history me-1"></i>História
+      </a>
+    </div>
+    <small class="text-mc-muted">&copy; {{ now.year }} {{ site.server_name or 'Reliquia' }} — Todos os direitos reservados</small>
+  </div>
+</footer>
+
+<!-- ── LIGHTBOX ── -->
+<div class="mc-lightbox" id="lightbox" onclick="closeLightbox()">
+  <span class="mc-lightbox-close" onclick="closeLightbox()">✕</span>
+  <img class="mc-lightbox-img" id="lightboxImg" src="" alt="">
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toastContainer" style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:10000;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function copyIP(btn) {
+  const ip = '{{ site.server_ip or "" }}';
+  navigator.clipboard.writeText(ip).then(() => {
+    showToast('IP copiado: ' + ip, 'success');
+    btn.innerHTML = '<i class="bi bi-clipboard-check"></i>';
+    setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i>', 2000);
+  });
+}
+function showToast(msg, type='success') {
+  const id = 'toast-' + Date.now();
+  const icons = { success: 'check-circle-fill', danger: 'x-circle-fill', info: 'info-circle-fill', warning: 'exclamation-triangle-fill' };
+  const el = document.createElement('div');
+  el.id = id;
+  el.className = `toast align-items-center border-0 show text-bg-${type}`;
+  el.style.borderRadius = '2px';
+  el.innerHTML = `<div class="d-flex"><div class="toast-body"><i class="bi bi-${icons[type]||'info-circle-fill'} me-2"></i>${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button></div>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lightboxImg').src = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,154 @@
+{% extends "admin/base.html" %}
+{% block title %}Usuários — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-people-fill text-mc-teal fs-5"></i>
+  <h1>Gerenciar Usuários</h1>
+  <small class="text-mc-muted ms-auto">{{ users|length }} usuário{{ 's' if users|length != 1 }}</small>
+</div>
+
+<div class="p-4">
+
+  <!-- Search -->
+  <form method="GET" class="mc-filter-bar mb-4 d-flex gap-2">
+    <div class="flex-grow-1">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-mc-surface-2 border-mc text-mc-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control mc-input" placeholder="Buscar por username ou e-mail…" value="{{ search }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-mc-secondary btn-sm">Buscar</button>
+    {% if search %}<a href="{{ url_for('admin_users') }}" class="btn btn-mc-secondary btn-sm">✕ Limpar</a>{% endif %}
+  </form>
+
+  <!-- Table -->
+  <div class="mc-card overflow-hidden">
+    <div class="table-responsive">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>Nick MC</th>
+            <th>Cargo</th>
+            <th>Membro desde</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr {% if u.banned %}style="opacity:.6;"{% endif %}>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                {% if u.minecraft_nick %}
+                <img src="https://mc-heads.net/avatar/{{ u.minecraft_nick }}/28"
+                     class="mc-avatar" style="width:28px;height:28px;" alt="" onerror="this.style.display='none'">
+                {% else %}
+                <i class="bi bi-person-circle text-mc-muted"></i>
+                {% endif %}
+                <a href="{{ url_for('profile', username=u.username) }}" class="text-mc-teal text-decoration-none fw-bold">
+                  {{ u.username }}
+                </a>
+                {% if u.id == current_user.id %}
+                <small class="text-mc-muted">(você)</small>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              {% if u.minecraft_nick %}
+              <code class="mc-code" style="font-size:.78rem;">{{ u.minecraft_nick }}</code>
+              {% else %}
+              <span class="text-mc-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if has_perm('manage_roles') and u.id != current_user.id and u.role != 'Master' or (has_perm('full_admin') and u.id != current_user.id) %}
+              <form method="POST" action="{{ url_for('admin_change_role', uid=u.id) }}" class="d-flex align-items-center gap-1">
+                <select name="role" class="form-select form-select-sm mc-input" style="width:130px;font-size:.78rem;"
+                        onchange="this.form.submit()">
+                  {% for r in roles %}
+                  <option value="{{ r }}" {% if u.role == r %}selected{% endif %}
+                          {% if r == 'Master' and not has_perm('full_admin') %}disabled{% endif %}>
+                    {{ r }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </form>
+              {% else %}
+              <span class="mc-role mc-role-{{ u.role|lower }}">{{ u.role }}</span>
+              {% endif %}
+            </td>
+            <td><small class="text-mc-muted">{{ u.created_at | fmtdate }}</small></td>
+            <td>
+              {% if u.banned %}
+              <span class="badge bg-danger" style="border-radius:2px;font-size:.7rem;">
+                <i class="bi bi-slash-circle me-1"></i>Banido
+              </span>
+              {% if u.ban_reason %}
+              <small class="text-mc-muted d-block" style="font-size:.72rem;" title="{{ u.ban_reason }}">
+                {{ u.ban_reason[:30] }}{% if u.ban_reason|length > 30 %}…{% endif %}
+              </small>
+              {% endif %}
+              {% else %}
+              <span class="badge" style="background:rgba(63,185,80,.15);color:var(--mc-green);border-radius:2px;font-size:.7rem;">
+                <i class="bi bi-check-circle me-1"></i>Ativo
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                {% if u.id != current_user.id and has_perm('ban_users') %}
+                  {% if u.banned %}
+                  <form method="POST" action="{{ url_for('admin_unban', uid=u.id) }}">
+                    <button type="submit" class="btn btn-mc-secondary btn-sm" title="Desbanir">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                  </form>
+                  {% elif u.role != 'Master' %}
+                  <button class="btn btn-mc-danger btn-sm" onclick="showBanModal({{ u.id }}, '{{ u.username }}')" title="Banir">
+                    <i class="bi bi-slash-circle"></i>
+                  </button>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Ban Modal -->
+<div class="modal fade" id="banModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:var(--mc-surface);border:1px solid var(--mc-border);border-radius:3px;">
+      <div class="modal-header" style="border-bottom:1px solid var(--mc-border);">
+        <h5 class="modal-title text-mc-red"><i class="bi bi-slash-circle me-2"></i>Banir Usuário</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="banForm">
+        <div class="modal-body">
+          <p class="text-mc-muted">Tem certeza que quer banir <strong id="banUsername" class="text-white"></strong>?</p>
+          <label class="mc-label">Motivo do ban</label>
+          <input type="text" name="reason" class="form-control mc-input" placeholder="ex: Spam, Griefer, etc.">
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--mc-border);">
+          <button type="button" class="btn btn-mc-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-mc-danger"><i class="bi bi-slash-circle me-1"></i>Confirmar Ban</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function showBanModal(uid, username) {
+  document.getElementById('banUsername').textContent = username;
+  document.getElementById('banForm').action = `/admin/users/${uid}/ban`;
+  new bootstrap.Modal(document.getElementById('banModal')).show();
+}
+</script>
+{% endblock %}

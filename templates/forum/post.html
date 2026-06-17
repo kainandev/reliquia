@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block extra_css %}
+<style>
+.author-skin-card{background:linear-gradient(160deg,#0e2a12 0%,var(--mc-surface) 60%);border:1px solid var(--mc-border);border-radius:3px;overflow:hidden;position:sticky;top:80px;}
+.skin-stage{background:radial-gradient(ellipse at 50% 80%,rgba(63,185,80,.18) 0%,transparent 70%),linear-gradient(180deg,#091a0a 0%,#0d1a0e 100%);display:flex;align-items:flex-end;justify-content:center;min-height:210px;position:relative;overflow:hidden;}
+.skin-stage::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(0deg,var(--mc-surface) 0%,transparent 100%);z-index:2;}
+.skin-img{height:190px;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 8px 16px rgba(0,0,0,.6));}
+.author-info{padding:1rem;}
+.author-stat{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(48,54,61,.5);font-size:.8rem;}
+.author-stat:last-child{border-bottom:none;}
+.author-stat-label{color:var(--mc-muted);}
+.author-stat-value{color:var(--mc-text);font-weight:600;}
+.activity-thread{position:relative;}
+.activity-thread::before{content:'';position:absolute;left:17px;top:0;bottom:40px;width:2px;background:linear-gradient(180deg,var(--mc-border) 0%,transparent 100%);z-index:0;}
+.activity-item{position:relative;z-index:1;display:flex;gap:.75rem;margin-bottom:.75rem;}
+.activity-bubble{flex:1;background:var(--mc-surface);border:1px solid var(--mc-border);border-radius:3px;overflow:hidden;transition:border-color .2s;}
+.activity-bubble:hover{border-color:#4a5568;}
+.activity-bubble-header{background:var(--mc-surface-2);border-bottom:1px solid var(--mc-border);padding:.4rem .75rem;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;font-size:.8rem;}
+.activity-bubble-body{padding:.75rem;}
+.review-approve{border-left:3px solid var(--mc-green)!important;}
+.review-changes{border-left:3px solid var(--mc-red)!important;}
+.review-comment{border-left:3px solid var(--mc-teal)!important;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <nav class="mb-3" style="font-size:.82rem;">
+    <a href="{{ url_for('forum') }}" class="text-mc-muted text-decoration-none"><i class="bi bi-collection-fill me-1"></i>Fórum</a>
+    <span class="text-mc-muted mx-2">/</span>
+    <span class="text-mc-muted">#{{ post.id }}</span>
+  </nav>
+  <div class="row g-4">
+    <!-- LEFT -->
+    <div class="col-lg-8 col-xl-9">
+      <div class="post-content-body mb-3">
+        <div class="post-header-bar p-3">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            {% if post.status=='open' %}<span class="d-inline-flex align-items-center gap-1 px-2 py-1" style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:2px;font-size:.78rem;"><i class="bi bi-exclamation-circle-fill text-mc-green"></i><span class="text-mc-green fw-bold">Aberto</span></span>
+            {% elif post.status=='closed' %}<span class="d-inline-flex align-items-center gap-1 px-2 py-1" style="background:rgba(248,81,73,.10);border:1px solid rgba(248,81,73,.3);border-radius:2px;font-size:.78rem;"><i class="bi bi-check-circle-fill text-mc-red"></i><span class="text-mc-red fw-bold">Fechado</span></span>
+            {% else %}<span class="d-inline-flex align-items-center gap-1 px-2 py-1" style="background:rgba(139,148,158,.10);border:1px solid rgba(139,148,158,.3);border-radius:2px;font-size:.78rem;"><i class="bi bi-archive-fill text-mc-muted"></i><span class="text-mc-muted fw-bold">Arquivado</span></span>{% endif %}
+            {% if post.pinned %}<span class="version-badge"><i class="bi bi-pin-angle-fill me-1"></i>Fixado</span>{% endif %}
+            {% if post.featured %}<span class="version-badge" style="border-color:rgba(210,153,34,.4);color:var(--mc-gold);background:rgba(210,153,34,.08);"><i class="bi bi-star-fill me-1"></i>Destaque</span>{% endif %}
+            {% if post.version_tag %}<span class="version-badge-post">v{{ post.version_tag }}</span>{% endif %}
+            <div class="ms-auto d-flex gap-2">
+              {% if current_user and (current_user.id==post.author_id or has_perm('full_admin')) %}
+              <a href="{{ url_for('forum_edit',pid=post.id) }}" class="btn btn-mc-secondary btn-sm"><i class="bi bi-pencil-fill me-1"></i>Editar</a>
+              {% endif %}
+              {% if current_user and (current_user.id==post.author_id or has_perm('archive_posts')) %}
+              <div class="dropdown">
+                <button class="btn btn-mc-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                <ul class="dropdown-menu mc-dropdown dropdown-menu-end">
+                  {% if post.status!='open' %}<li><form method="POST" action="{{ url_for('forum_status',pid=post.id) }}"><input type="hidden" name="status" value="open"><button class="dropdown-item text-mc-green" type="submit"><i class="bi bi-arrow-clockwise me-2"></i>Reabrir</button></form></li>{% endif %}
+                  {% if post.status!='closed' %}<li><form method="POST" action="{{ url_for('forum_status',pid=post.id) }}"><input type="hidden" name="status" value="closed"><button class="dropdown-item" type="submit"><i class="bi bi-check-circle me-2"></i>Fechar</button></form></li>{% endif %}
+                  {% if has_perm('archive_posts') and post.status!='archived' %}<li><form method="POST" action="{{ url_for('forum_status',pid=post.id) }}"><input type="hidden" name="status" value="archived"><button class="dropdown-item text-warning" type="submit"><i class="bi bi-archive me-2"></i>Arquivar</button></form></li>{% endif %}
+                  {% if has_perm('pin_posts') %}<li><form method="POST" action="{{ url_for('toggle_pinned',pid=post.id) }}"><button class="dropdown-item text-mc-gold" type="submit"><i class="bi bi-pin-angle me-2"></i>{{ 'Desafixar' if post.pinned else 'Fixar' }}</button></form></li>{% endif %}
+                  {% if has_perm('manage_featured') %}<li><form method="POST" action="{{ url_for('toggle_featured',pid=post.id) }}"><button class="dropdown-item text-mc-gold" type="submit"><i class="bi bi-star me-2"></i>{{ 'Remover Destaque' if post.featured else 'Destacar' }}</button></form></li>{% endif %}
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <h1 class="fs-4 fw-bold mb-0">{{ post.title }}</h1>
+        </div>
+        <div class="p-4">
+          <div class="md-content">{{ post.content|md|safe }}</div>
+          {% if post.parsed_images %}
+          <div class="post-images-grid mt-3">
+            {% for img in post.parsed_images %}<img src="{{ img }}" loading="lazy" onclick="openLightbox('{{ img }}')">{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="px-4 pb-3 pt-2 border-top border-mc">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-mc-muted" style="font-size:.78rem;letter-spacing:.03em;">REAGIR</span>
+            {% for key,(emoji,label) in reaction_emojis.items() %}
+            <button class="reaction-btn {% if key in user_reacs %}reacted{% endif %}" onclick="reactPost('{{ key }}',this)" title="{{ label }}" {% if not current_user %}disabled{% endif %}>
+              <span>{{ emoji }}</span><span class="reaction-count">{% if reactions.get(key,0) %}{{ reactions[key] }}{% endif %}</span>
+            </button>
+            {% endfor %}
+            {% if not current_user %}<small class="text-mc-muted ms-1"><a href="{{ url_for('login') }}" class="text-mc-teal text-decoration-none">Login</a> para reagir</small>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div id="activitySection">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-activity text-mc-teal"></i>
+          <h2 class="fs-5 mb-0 fw-bold">Atividade</h2>
+          <span class="badge" style="background:rgba(88,200,192,.15);color:var(--mc-teal);border-radius:2px;font-size:.65rem;" id="activityCount">{{ reviews|length }}</span>
+        </div>
+        <div class="activity-thread" id="activityFeed">
+          {% for r in reviews %}
+          <div class="activity-item">
+            <div style="flex-shrink:0;width:36px;">
+              {% if r.minecraft_nick %}
+              <a href="{{ url_for('profile',username=r.username) }}"><img src="https://mc-heads.net/avatar/{{ r.minecraft_nick }}/36" class="mc-avatar" style="width:36px;height:36px;border-radius:2px;" alt="" onerror="this.style.display='none'"></a>
+              {% else %}<div style="width:36px;height:36px;border-radius:2px;background:var(--mc-surface-2);border:1px solid var(--mc-border);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill text-mc-muted"></i></div>{% endif %}
+            </div>
+            <div class="activity-bubble review-{{ r.review_type }} flex-grow-1">
+              <div class="activity-bubble-header">
+                <a href="{{ url_for('profile',username=r.username) }}" class="text-mc-teal text-decoration-none fw-bold">{{ r.username }}</a>
+                <span class="mc-role mc-role-{{ r.role|lower }}">{{ r.role }}</span>
+                {% if r.review_type=='approve' %}<span class="text-mc-green fw-bold" style="font-size:.78rem;"><i class="bi bi-check-circle-fill me-1"></i>aprovou</span>
+                {% elif r.review_type=='changes' %}<span class="text-mc-red fw-bold" style="font-size:.78rem;"><i class="bi bi-x-circle-fill me-1"></i>pediu mudanças</span>
+                {% else %}<span class="text-mc-teal fw-bold" style="font-size:.78rem;"><i class="bi bi-chat-fill me-1"></i>comentou</span>{% endif %}
+                <span class="text-mc-muted ms-auto" style="font-size:.75rem;">{{ r.created_at|fmtdate }}</span>
+                {% if current_user and (current_user.id==r.user_id or has_perm('soft_delete_comments')) %}
+                <form method="POST" action="{{ url_for('delete_review',rid=r.id) }}" class="ms-1"><button type="submit" class="btn p-0 text-mc-muted" style="background:none;border:none;line-height:1;" title="Remover"><i class="bi bi-trash3" style="font-size:.72rem;"></i></button></form>
+                {% endif %}
+              </div>
+              {% if r.body %}<div class="activity-bubble-body"><div class="md-content" style="font-size:.9rem;">{{ r.body|md|safe }}</div></div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if current_user and has_perm('comment') %}
+        <div class="activity-item mt-2">
+          <div style="flex-shrink:0;width:36px;">
+            {% if current_user.minecraft_nick %}<img src="https://mc-heads.net/avatar/{{ current_user.minecraft_nick }}/36" class="mc-avatar" style="width:36px;height:36px;border-radius:2px;" alt="" onerror="this.style.display='none'">
+            {% else %}<div style="width:36px;height:36px;border-radius:2px;background:var(--mc-surface-2);border:1px solid var(--mc-border);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill text-mc-muted"></i></div>{% endif %}
+          </div>
+          <div class="flex-grow-1 mc-card">
+            <div class="p-3" style="background:var(--mc-surface-2);border-bottom:1px solid var(--mc-border);"><span class="text-mc-muted" style="font-size:.82rem;"><i class="bi bi-pencil me-1"></i>Deixar review — Markdown suportado</span></div>
+            <div class="p-3">
+              <textarea id="reviewBody" class="form-control mc-input mb-3" rows="3" placeholder="Comentário opcional (Markdown)…"></textarea>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-mc-primary btn-sm" onclick="submitReview('approve')"><i class="bi bi-check-circle-fill me-1"></i>Aprovar</button>
+                <button class="btn btn-mc-secondary btn-sm" onclick="submitReview('changes')"><i class="bi bi-x-circle-fill me-1 text-mc-red"></i>Mudanças necessárias</button>
+                <button class="btn btn-mc-secondary btn-sm" onclick="submitReview('comment')"><i class="bi bi-chat-fill me-1 text-mc-teal"></i>Comentar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% elif not current_user %}
+        <div class="mc-card p-3 text-center mt-2">
+          <a href="{{ url_for('login') }}" class="btn btn-mc-primary btn-sm me-2"><i class="bi bi-box-arrow-in-right me-1"></i>Entrar para interagir</a>
+          <a href="{{ url_for('register') }}" class="btn btn-mc-secondary btn-sm">Registrar</a>
+        </div>
+        {% else %}
+        <div class="mc-card p-3 text-center mt-2 text-mc-muted" style="font-size:.85rem;"><i class="bi bi-lock-fill me-1"></i>Você precisa ser <strong>Jogador</strong> ou superior para interagir.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT sidebar -->
+    <div class="col-lg-4 col-xl-3">
+      <div class="author-skin-card">
+        <div class="skin-stage">
+          {% if post.minecraft_nick %}
+          <img src="https://mc-heads.net/body/{{ post.minecraft_nick }}/200" class="skin-img" alt="{{ post.author }}" onerror="this.outerHTML='<span style=\'font-size:5rem;opacity:.2;padding-bottom:1rem;\'>👤</span>'">
+          {% else %}<span style="font-size:5rem;opacity:.2;padding-bottom:1rem;">👤</span>{% endif %}
+        </div>
+        <div class="author-info">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div>
+              <a href="{{ url_for('profile',username=post.author) }}" class="text-white text-decoration-none fw-bold fs-6">{{ post.author }}</a>
+              <div class="mt-1"><span class="mc-role mc-role-{{ post.author_role|lower }}">{{ post.author_role }}</span></div>
+            </div>
+          </div>
+          {% if post.minecraft_nick %}<div class="author-stat"><span class="author-stat-label"><i class="bi bi-controller me-1"></i>Nick MC</span><code class="mc-code" style="font-size:.72rem;">{{ post.minecraft_nick }}</code></div>{% endif %}
+          <div class="author-stat"><span class="author-stat-label"><i class="bi bi-hash me-1"></i>Post</span><span class="author-stat-value">#{{ post.id }}</span></div>
+          <div class="author-stat"><span class="author-stat-label"><i class="bi bi-calendar3 me-1"></i>Aberto</span><span class="author-stat-value" style="font-size:.72rem;">{{ post.created_at|fmtdate }}</span></div>
+          {% if post.version_tag %}<div class="author-stat"><span class="author-stat-label"><i class="bi bi-layers me-1"></i>Versão</span><span class="version-badge">v{{ post.version_tag }}</span></div>{% endif %}
+          <div class="author-stat"><span class="author-stat-label"><i class="bi bi-activity me-1"></i>Reviews</span><span class="author-stat-value">{{ reviews|length }}</span></div>
+          {% set total_reacts=reactions.values()|sum %}{% if total_reacts>0 %}<div class="author-stat"><span class="author-stat-label"><i class="bi bi-heart me-1"></i>Reações</span><span class="author-stat-value">{{ total_reacts }}</span></div>{% endif %}
+          <a href="{{ url_for('profile',username=post.author) }}" class="btn btn-mc-secondary btn-sm w-100 mt-3"><i class="bi bi-person-fill me-1"></i>Ver Perfil</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const POST_ID={{post.id}};
+function reactPost(key,btn){
+  fetch(`/forum/${POST_ID}/react`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reaction:key})})
+  .then(r=>r.json()).then(data=>{
+    if(data.error){showToast(data.error,'danger');return;}
+    btn.classList.toggle('reacted',data.added);
+    btn.querySelector('.reaction-count').textContent=data.count>0?data.count:'';
+  });
+}
+const RMETA={approve:{label:'aprovou',cls:'text-mc-green',icon:'bi-check-circle-fill',bc:'review-approve'},changes:{label:'pediu mudanças',cls:'text-mc-red',icon:'bi-x-circle-fill',bc:'review-changes'},comment:{label:'comentou',cls:'text-mc-teal',icon:'bi-chat-fill',bc:'review-comment'}};
+function buildReviewEl(r){
+  const m=RMETA[r.review_type]||RMETA.comment;
+  const av=r.nick?`<img src="https://mc-heads.net/avatar/${r.nick}/36" style="width:36px;height:36px;border-radius:2px;image-rendering:pixelated;" onerror="this.style.display='none'">`:`<div style="width:36px;height:36px;border-radius:2px;background:var(--mc-surface-2);border:1px solid var(--mc-border);display:flex;align-items:center;justify-content:center;"><i class="bi bi-person-fill text-mc-muted"></i></div>`;
+  const body=r.body?`<div class="activity-bubble-body"><div class="md-content" style="font-size:.9rem;">${marked.parse(r.body)}</div></div>`:'';
+  const d=document.createElement('div');d.className='activity-item';
+  d.innerHTML=`<div style="flex-shrink:0;width:36px;">${av}</div><div class="activity-bubble ${m.bc} flex-grow-1"><div class="activity-bubble-header"><span class="fw-bold" style="color:var(--mc-teal);font-size:.85rem;">${r.username}</span><span class="mc-role mc-role-${(r.role||'').toLowerCase()}">${r.role}</span><span class="${m.cls} fw-bold" style="font-size:.78rem;"><i class="bi ${m.icon} me-1"></i>${m.label}</span><span class="text-mc-muted ms-auto" style="font-size:.75rem;">${r.created_at}</span></div>${body}</div>`;
+  return d;
+}
+function submitReview(type){
+  const body=document.getElementById('reviewBody').value;
+  fetch(`/forum/${POST_ID}/review`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,body})})
+  .then(r=>r.json()).then(data=>{
+    if(data.error){showToast(data.error,'danger');return;}
+    document.getElementById('reviewBody').value='';
+    const feed=document.getElementById('activityFeed');
+    feed.appendChild(buildReviewEl(data));
+    const cnt=document.getElementById('activityCount');
+    if(cnt)cnt.textContent=parseInt(cnt.textContent||0)+1;
+    showToast('Review enviada! ✅','success');
+  }).catch(()=>showToast('Erro ao enviar.','danger'));
+}
+</script>
+{% endblock %}

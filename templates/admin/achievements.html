@@ -1,0 +1,184 @@
+{% extends "admin/base.html" %}
+{% block title %}Conquistas — Admin {{ site.server_name or 'Reliquia' }}{% endblock %}
+{% block extra_css %}
+<style>
+.mc-achievement-toast{display:inline-flex;align-items:center;gap:.6rem;background:#1a1100;border:2px solid;border-radius:0;padding:.45rem .7rem .45rem .45rem;cursor:default;position:relative;}
+.mc-achievement-toast::before{content:'Achievement Unlocked!';position:absolute;top:-1.25rem;left:0;right:0;text-align:center;font-family:'Press Start 2P',monospace;font-size:.42rem;color:#FFAA00;white-space:nowrap;letter-spacing:.04em;}
+.ach-icon-wrap{width:38px;height:38px;background:#1c1600;border:2px solid rgba(0,0,0,.5);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ach-icon-wrap img{width:32px;height:32px;image-rendering:pixelated;}
+.ach-name{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;color:inherit;}
+.ach-desc{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#aaa;}
+</style>
+{% endblock %}
+{% block admin_content %}
+<div class="admin-header">
+  <i class="bi bi-trophy-fill text-mc-gold fs-5"></i>
+  <h1>Conquistas dos Jogadores</h1>
+</div>
+<div class="p-4">
+
+  <!-- Create -->
+  <div class="mc-card p-4 mb-4" style="border-top:2px solid var(--mc-gold);">
+    <h2 class="fs-5 fw-bold mb-3"><i class="bi bi-plus-circle-fill text-mc-gold me-2"></i>Nova Conquista</h2>
+    <form method="POST">
+      <input type="hidden" name="action" value="create">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="mc-label">Nome <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control mc-input" required placeholder="O Explorador">
+        </div>
+        <div class="col-md-4">
+          <label class="mc-label">Descrição (aparece no tooltip)</label>
+          <input type="text" name="description" class="form-control mc-input" placeholder="Jogou em 2+ versões">
+        </div>
+        <div class="col-md-2">
+          <label class="mc-label">Item Minecraft</label>
+          <select name="icon" class="form-select mc-input" id="iconSelect" onchange="previewIcon(this.value)">
+            {% for item in mc_items %}
+            <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label class="mc-label">Cor</label>
+          <input type="color" name="color" id="colorPicker" class="form-control mc-input" value="#FFAA00" style="height:38px;padding:.2rem;">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="submit" class="btn btn-mc-primary w-100"><i class="bi bi-plus-lg"></i></button>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div class="mt-3" id="achievementPreview" style="padding-top:1.5rem;display:inline-block;">
+        <div class="mc-achievement-toast" id="previewCard" style="border-color:#FFAA00;box-shadow:0 0 8px #FFAA0044;">
+          <div class="ach-icon-wrap" id="previewIconWrap" style="border-color:#FFAA0044;">
+            <img id="previewImg" src="https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/nether_star.png" alt="">
+          </div>
+          <div>
+            <div class="ach-name" id="previewName" style="color:#FFAA00;">Nova Conquista</div>
+            <div class="ach-desc" id="previewDesc">Descrição aqui</div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Award -->
+  <div class="mc-card p-4 mb-4">
+    <h2 class="fs-5 fw-bold mb-3"><i class="bi bi-gift-fill text-mc-green me-2"></i>Conceder Conquista</h2>
+    <form method="POST" class="d-flex flex-wrap gap-2 align-items-end">
+      <input type="hidden" name="action" value="award">
+      <div>
+        <label class="mc-label">Jogador</label>
+        <select name="user_id" class="form-select mc-input" style="width:180px;">
+          {% for u in users %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="mc-label">Conquista</label>
+        <select name="achievement_id" class="form-select mc-input" style="width:240px;">
+          {% for a in achievements %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-mc-primary"><i class="bi bi-trophy me-1"></i>Conceder</button>
+    </form>
+  </div>
+
+  <div class="row g-4">
+    <!-- Achievements list -->
+    <div class="col-lg-5">
+      <h3 class="fs-6 fw-bold mb-3 text-mc-muted">Conquistas Cadastradas ({{ achievements|length }})</h3>
+      <div class="d-flex flex-column gap-2">
+        {% for a in achievements %}
+        <div class="mc-card p-2 d-flex align-items-center gap-3">
+          <div style="padding-top:1.4rem;">
+            <div class="mc-achievement-toast" style="border-color:{{ a.color }};box-shadow:0 0 6px {{ a.color }}33;min-width:0;">
+              <div class="ach-icon-wrap" style="border-color:{{ a.color }}44;">
+                <img src="https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/{{ a.icon }}.png"
+                     alt="{{ a.name }}" onerror="this.src='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/nether_star.png'">
+              </div>
+              <div>
+                <div class="ach-name" style="color:{{ a.color }};">{{ a.name }}</div>
+                <div class="ach-desc">{{ a.description[:30] }}{% if a.description|length>30 %}…{% endif %}</div>
+              </div>
+            </div>
+          </div>
+          <form method="POST" class="ms-auto" onsubmit="return confirm('Deletar conquista?')">
+            <input type="hidden" name="action" value="delete_ach">
+            <input type="hidden" name="achievement_id" value="{{ a.id }}">
+            <button type="submit" class="btn btn-mc-danger btn-sm" style="padding:.2rem .5rem;">
+              <i class="bi bi-trash3" style="font-size:.75rem;"></i>
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Awarded log -->
+    <div class="col-lg-7">
+      <h3 class="fs-6 fw-bold mb-3 text-mc-muted">Histórico de Conquistas Concedidas</h3>
+      <div class="mc-card overflow-hidden">
+        <table class="mc-table">
+          <thead><tr><th>Jogador</th><th>Conquista</th><th>Quando</th><th></th></tr></thead>
+          <tbody>
+            {% for row in awarded %}
+            <tr>
+              <td><a href="{{ url_for('profile',username=row.username) }}" class="text-mc-teal text-decoration-none fw-bold" style="font-size:.85rem;">{{ row.username }}</a></td>
+              <td>
+                <div style="padding-top:.9rem;display:inline-block;">
+                  <div class="mc-achievement-toast" style="border-color:{{ row.color }};min-width:0;padding:.3rem .5rem .3rem .3rem;">
+                    <div class="ach-icon-wrap" style="width:24px;height:24px;border-color:{{ row.color }}44;">
+                      <img src="https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/{{ row.icon }}.png"
+                           style="width:20px;height:20px;image-rendering:pixelated;" alt=""
+                           onerror="this.src='https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/nether_star.png'">
+                    </div>
+                    <span class="ach-name" style="color:{{ row.color }};font-size:.68rem;">{{ row.ach_name }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><small class="text-mc-muted">{{ row.awarded_at|fmtdate }}</small></td>
+              <td>
+                <form method="POST">
+                  <input type="hidden" name="action" value="revoke">
+                  <input type="hidden" name="user_id" value="{{ row.user_id }}">
+                  <input type="hidden" name="achievement_id" value="{{ row.achievement_id }}">
+                  <button type="submit" class="btn btn-sm p-1" style="background:none;border:1px solid var(--mc-border);border-radius:2px;color:var(--mc-muted);" onclick="return confirm('Remover conquista de {{ row.username }}?')">
+                    <i class="bi bi-x" style="font-size:.75rem;"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE_URL = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.4/assets/minecraft/textures/item/';
+const FALLBACK  = BASE_URL + 'nether_star.png';
+
+function previewIcon(item) {
+  const img = document.getElementById('previewImg');
+  img.src = BASE_URL + item + '.png';
+  img.onerror = () => img.src = FALLBACK;
+}
+
+document.getElementById('colorPicker').addEventListener('input', function() {
+  const c = this.value;
+  document.getElementById('previewCard').style.borderColor = c;
+  document.getElementById('previewCard').style.boxShadow = `0 0 8px ${c}44`;
+  document.getElementById('previewIconWrap').style.borderColor = c + '44';
+  document.getElementById('previewName').style.color = c;
+});
+
+document.querySelector('input[name="name"]').addEventListener('input', function() {
+  document.getElementById('previewName').textContent = this.value || 'Nova Conquista';
+});
+document.querySelector('input[name="description"]').addEventListener('input', function() {
+  document.getElementById('previewDesc').textContent = this.value || 'Descrição aqui';
+});
+</script>
+{% endblock %}
